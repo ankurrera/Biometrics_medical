@@ -205,6 +205,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
 
           // Dosage * and Frequency * (Row)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: TextFormField(
@@ -225,6 +226,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: _selectedFrequency,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Frequency *',
                     hintText: 'Select',
@@ -232,7 +234,10 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                   items: frequencyMap.keys.map((frequency) {
                     return DropdownMenuItem(
                       value: frequency,
-                      child: Text(frequency),
+                      child: Text(
+                        frequency,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -253,6 +258,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
 
           // Duration * and Quantity * (Row)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: TextFormField(
@@ -317,6 +323,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
           // Medicine Type * (Required dropdown)
           DropdownButtonFormField<MedicineType>(
             value: _medicineType,
+            isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Medicine Type *',
               hintText: 'Select type',
@@ -324,7 +331,10 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
             items: MedicineType.values.map((type) {
               return DropdownMenuItem(
                 value: type,
-                child: Text(type.displayName),
+                child: Text(
+                  type.displayName,
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
             }).toList(),
             onChanged: (value) {
@@ -342,10 +352,12 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
 
           // Route * and Food Timing * (Row)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: DropdownButtonFormField<RouteOfAdministration>(
                   value: _route,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Route *',
                     hintText: 'Select',
@@ -353,7 +365,10 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                   items: RouteOfAdministration.values.map((route) {
                     return DropdownMenuItem(
                       value: route,
-                      child: Text(route.displayName),
+                      child: Text(
+                        route.displayName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -372,6 +387,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               Expanded(
                 child: DropdownButtonFormField<FoodTiming>(
                   value: _foodTiming,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Food Timing *',
                     hintText: 'Select',
@@ -379,7 +395,10 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                   items: FoodTiming.values.map((timing) {
                     return DropdownMenuItem(
                       value: timing,
-                      child: Text(timing.displayName),
+                      child: Text(
+                        timing.displayName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (value) {
