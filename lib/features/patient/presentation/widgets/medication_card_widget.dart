@@ -54,7 +54,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
     _selectedFrequency = widget.initialData?.frequency;
     _durationController = TextEditingController(text: widget.initialData?.duration);
     _quantityController = TextEditingController(
-      text: widget.initialData?.quantity != null && widget.initialData!.quantity > 0 
+      text: (widget.initialData?.quantity ?? 0) > 0 
           ? widget.initialData!.quantity.toString() 
           : '',
     );
@@ -88,17 +88,16 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
       return;
     }
 
-    // Try to parse duration as integer (days)
-    final durationText = _durationController.text.trim();
-    final durationMatch = RegExp(r'(\d+)').firstMatch(durationText);
+    // Parse duration as integer (days)
+    // Input is numeric-only via FilteringTextInputFormatter
+    final int? duration = int.tryParse(_durationController.text.trim());
     
-    if (durationMatch == null) {
+    if (duration == null) {
       _quantityController.text = '';
       _notifyChange();
       return;
     }
 
-    final int duration = int.parse(durationMatch.group(1)!);
     final int frequencyPerDay = frequencyMap[_selectedFrequency] ?? 1;
 
     final int calculatedQuantity = duration * frequencyPerDay;
@@ -275,28 +274,34 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: TextFormField(
-                  controller: _quantityController,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity *',
-                    hintText: 'Auto-calculated',
-                    helperText: 'Auto-calculated',
-                  ),
+                child: Semantics(
+                  label: _quantityController.text.isNotEmpty 
+                      ? 'Auto-calculated quantity: ${_quantityController.text}'
+                      : 'Quantity will be calculated automatically',
                   readOnly: true,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                  child: TextFormField(
+                    controller: _quantityController,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity *',
+                      hintText: 'Auto-calculated',
+                      helperText: 'Auto-calculated',
+                    ),
+                    readOnly: true,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Required';
+                      }
+                      final qty = int.tryParse(value);
+                      if (qty == null || qty <= 0) {
+                        return 'Invalid';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Required';
-                    }
-                    final qty = int.tryParse(value);
-                    if (qty == null || qty <= 0) {
-                      return 'Invalid';
-                    }
-                    return null;
-                  },
                 ),
               ),
             ],
