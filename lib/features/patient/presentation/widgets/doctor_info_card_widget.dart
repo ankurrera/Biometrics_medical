@@ -173,6 +173,14 @@ class _DoctorInfoCardWidgetState extends State<DoctorInfoCardWidget> {
               if (value == null || value.trim().isEmpty) {
                 return 'Doctor name is required';
               }
+              // Check for placeholder values
+              final lowerValue = value.trim().toLowerCase();
+              if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                  lowerValue == 'n/a' || lowerValue == 'na' ||
+                  lowerValue == 'test' || lowerValue == 'placeholder' ||
+                  lowerValue == 'dr' || lowerValue == 'doctor') {
+                return 'Please enter a valid doctor name';
+              }
               return null;
             },
           ),
@@ -185,6 +193,18 @@ class _DoctorInfoCardWidgetState extends State<DoctorInfoCardWidget> {
               labelText: 'Specialization',
               hintText: 'e.g., Cardiologist, General Physician',
             ),
+            validator: (value) {
+              // Optional field, but check for placeholders if provided
+              if (value != null && value.trim().isNotEmpty) {
+                final lowerValue = value.trim().toLowerCase();
+                if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                    lowerValue == 'n/a' || lowerValue == 'na' ||
+                    lowerValue == 'test' || lowerValue == 'placeholder') {
+                  return 'Please remove placeholder text or leave empty';
+                }
+              }
+              return null;
+            },
           ),
           const SizedBox(height: AppSpacing.sm),
 
@@ -199,6 +219,13 @@ class _DoctorInfoCardWidgetState extends State<DoctorInfoCardWidget> {
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Hospital/Clinic name is required';
+              }
+              // Check for placeholder values
+              final lowerValue = value.trim().toLowerCase();
+              if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                  lowerValue == 'n/a' || lowerValue == 'na' ||
+                  lowerValue == 'test' || lowerValue == 'placeholder') {
+                return 'Please enter a valid hospital/clinic name';
               }
               return null;
             },
@@ -216,6 +243,13 @@ class _DoctorInfoCardWidgetState extends State<DoctorInfoCardWidget> {
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'Medical registration number is required';
+              }
+              // Check for placeholder values
+              final lowerValue = value.trim().toLowerCase();
+              if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                  lowerValue == 'n/a' || lowerValue == 'na' ||
+                  lowerValue == 'test' || lowerValue == 'placeholder') {
+                return 'Please enter a valid registration number';
               }
               return null;
             },

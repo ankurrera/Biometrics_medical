@@ -432,6 +432,20 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               hintText: 'e.g., Take after meals with water',
             ),
             maxLines: 2,
+            validator: (value) {
+              // Optional field, but check for placeholders if provided
+              if (value != null && value.trim().isNotEmpty) {
+                final lowerValue = value.trim().toLowerCase();
+                if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                    lowerValue == 'n/a' || lowerValue == 'na' ||
+                    lowerValue.startsWith('take food mmm') ||
+                    lowerValue.startsWith('take after food mmm') ||
+                    lowerValue == 'test' || lowerValue == 'placeholder') {
+                  return 'Please remove placeholder text or leave empty';
+                }
+              }
+              return null;
+            },
           ),
         ],
       ),
