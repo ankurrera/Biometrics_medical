@@ -290,7 +290,6 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                   label: _quantityController.text.isNotEmpty 
                       ? 'Quantity ${_quantityController.text}'
                       : 'Quantity',
-                  readOnly: true,
                   child: TextFormField(
                     controller: _quantityController,
                     decoration: const InputDecoration(
