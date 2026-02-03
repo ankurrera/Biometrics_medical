@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareSync - Emergency Medical Data</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .emergency-header {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .emergency-badge {
+      font-weight: bold;
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 48px;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #ef4444;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .patient-card {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border-radius: 20px;
+      padding: 24px;
+      color: white;
+      margin-top: 16px;
+    }
+
+    .patient-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .patient-info .label {
+      font-size: 12px;
+      opacity: 0.8;
+      letter-spacing: 1px;
+    }
+
+    .patient-name {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .blood-type {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .blood-icon {
+      font-size: 24px;
+    }
+
+    .blood-label {
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .blood-value {
+      color: #ef4444;
+      font-size: 24px;
+      font-weight: bold;
+      margin-left: auto;
+    }
+
+    .section {
+      margin-top: 24px;
+    }
+
+    .section h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #334155;
+    }
+
+    .condition-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid #94a3b8;
+    }
+
+    .condition-card.allergy {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+
+    .condition-card.chronic {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .condition-type {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+
+    .severity {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .severity.critical { background: #ef4444; }
+    .severity.severe { background: #f97316; }
+    .severity.moderate { background: #f59e0b; }
+    .severity.mild { background: #22c55e; }
+
+    .condition-desc {
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    .medication-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .med-name {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .med-details {
+      color: #64748b;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .contact-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .contact-name {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .contact-relation {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .call-button {
+      display: block;
+      background: #22c55e;
+      color: white;
+      text-align: center;
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .empty {
+      color: #94a3b8;
+      font-style: italic;
+      padding: 16px;
+      text-align: center;
+      background: white;
+      border-radius: 12px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .disclaimer {
+      font-size: 12px;
+      margin-top: 8px;
+      opacity: 0.7;
+    }
+
+    .error-container {
+      text-align: center;
+      padding: 48px 24px;
+    }
+
+    .error-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .button {
+      display: inline-block;
+      background: #0d9488;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      margin-top: 16px;
+      font-weight: 600;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header class="emergency-header">
+    <div class="header-content">
+      <span class="emergency-badge">🚨 EMERGENCY MEDICAL DATA</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading emergency data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="error-container hidden">
+      <div class="error-icon">⚠️</div>
+      <h1>Patient Not Found</h1>
+      <p id="error-message">This QR code is not associated with any patient.</p>
+    </div>
+
+    <!-- Data Content -->
+    <div id="content" class="hidden">
+      <section class="patient-card">
+        <div class="patient-icon">👤</div>
+        <div class="patient-info">
+          <span class="label">PATIENT</span>
+          <h1 id="patient-name" class="patient-name">-</h1>
+        </div>
+        <div id="blood-type-container" class="blood-type hidden">
+          <span class="blood-icon">🩸</span>
+          <span class="blood-label">BLOOD TYPE</span>
+          <span id="blood-type" class="blood-value">-</span>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>⚠️ Medical Conditions & Allergies</h2>
+        <div id="conditions-list" class="conditions-list">
+          <p class="empty">No conditions listed</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>💊 Current Medications</h2>
+        <div id="medications-list" class="medications-list">
+          <p class="empty">No current medications</p>
+        </div>
+      </section>
+
+      <section id="emergency-contact-section" class="section hidden">
+        <h2>📞 Emergency Contact</h2>
+        <div class="contact-card">
+          <div id="contact-name" class="contact-name">-</div>
+          <div id="contact-relation" class="contact-relation"></div>
+          <a id="call-button" href="tel:" class="call-button">📱 Call</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>Powered by <strong>CareSync</strong></p>
+    <p class="disclaimer">This data was shared by the patient for emergency use.</p>
+  </footer>
+
+  <script>
+    // Configuration - UPDATE THESE VALUES
+    const SUPABASE_URL = 'https://lfgolvfcuslutspvutmz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZ29sdmZjdXNsdXRzcHZ1dG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzMjYwNDcsImV4cCI6MjA4MTkwMjA0N30.YERtNCWUR2rB5Nch_d5hqhv9Sqc0s-NrOHf52i8c-aE';
+
+    // Get QR code ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const qrCodeId = urlParams.get('id') || window.location.pathname.split('/').pop();
+
+    async function loadEmergencyData() {
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const contentEl = document.getElementById('content');
+
+      if (!qrCodeId || qrCodeId === 'emergency.html') {
+        showError('Invalid QR code');
+        return;
+      }
+
+      try {
+        // Call Supabase function
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_emergency_data`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({ p_qr_code_id: qrCodeId })
+        });
+
+        const data = await response.json();
+
+        if (!data || !data.patient) {
+          showError('Patient not found');
+          return;
+        }
+
+        // Populate data
+        displayData(data);
+
+        // Show content
+        loadingEl.classList.add('hidden');
+        contentEl.classList.remove('hidden');
+
+      } catch (err) {
+        console.error('Error:', err);
+        showError('Failed to load data');
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('error').classList.remove('hidden');
+      document.getElementById('error-message').textContent = message;
+    }
+
+    function displayData(data) {
+      const patient = data.patient || {};
+      const conditions = data.conditions || [];
+      const medications = data.medications || [];
+
+      // Patient name
+      document.getElementById('patient-name').textContent = patient.full_name || 'Unknown';
+
+      // Blood type
+      if (patient.blood_type) {
+        document.getElementById('blood-type').textContent = patient.blood_type;
+        document.getElementById('blood-type-container').classList.remove('hidden');
+      }
+
+      // Conditions
+      if (conditions.length > 0) {
+        const conditionsHtml = conditions.map(c => `
+          <div class="condition-card ${c.type || ''}">
+            <span class="condition-type">${(c.type || 'OTHER').toUpperCase()}</span>
+            ${c.severity ? `<span class="severity ${c.severity}">${c.severity}</span>` : ''}
+            <p class="condition-desc">${c.description}</p>
+          </div>
+        `).join('');
+        document.getElementById('conditions-list').innerHTML = conditionsHtml;
+      }
+
+      // Medications
+      if (medications.length > 0) {
+        const medsHtml = medications.map(m => `
+          <div class="medication-card">
+            <div class="med-name">${m.medicine}</div>
+            <div class="med-details">${m.dosage} • ${m.frequency}</div>
+          </div>
+        `).join('');
+        document.getElementById('medications-list').innerHTML = medsHtml;
+      }
+
+      // Emergency contact
+      if (patient.emergency_contact) {
+        const contact = patient.emergency_contact;
+        document.getElementById('contact-name').textContent = contact.name;
+        if (contact.relationship) {
+          document.getElementById('contact-relation').textContent = contact.relationship;
+        }
+        document.getElementById('call-button').href = `tel:${contact.phone}`;
+        document.getElementById('call-button').textContent = `📱 Call ${contact.phone}`;
+        document.getElementById('emergency-contact-section').classList.remove('hidden');
+      }
+    }
+
+    // Load data on page load
+    loadEmergencyData();
+  </script>
+</body>
+</html>
+

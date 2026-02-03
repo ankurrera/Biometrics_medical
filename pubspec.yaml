@@ -1,0 +1,71 @@
+name: caresync
+description: "A biometric authenticated medical logging application"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+  
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  
+  # Navigation
+  go_router: ^14.6.2
+  
+  # Supabase
+  supabase_flutter: ^2.8.1
+  
+  # Biometric Authentication
+  local_auth: ^2.3.0
+  flutter_secure_storage: ^9.2.2
+  
+  # QR Code
+  pretty_qr_code: ^3.3.0
+  mobile_scanner: ^6.0.2
+
+  # Data Models
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Utilities
+  uuid: ^4.5.1
+  intl: ^0.20.2
+  url_launcher: ^6.3.1
+  share_plus: ^10.1.2
+  image_picker: ^1.1.2
+  crypto: ^3.0.3
+
+  # Environment variables
+  flutter_dotenv: ^5.2.1
+
+  # Form handling
+  reactive_forms: ^17.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+  # Code generation
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.6.2
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - .env
