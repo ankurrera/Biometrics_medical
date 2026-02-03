@@ -286,28 +286,33 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: TextFormField(
-                  controller: _quantityController,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity *',
-                    hintText: 'Auto-calculated',
-                    helperText: 'Auto-calculated',
+                child: Semantics(
+                  label: _quantityController.text.isNotEmpty 
+                      ? 'Quantity ${_quantityController.text}'
+                      : 'Quantity',
+                  child: TextFormField(
+                    controller: _quantityController,
+                    decoration: const InputDecoration(
+                      labelText: 'Quantity *',
+                      hintText: 'Auto-calculated',
+                      helperText: 'Auto-calculated',
+                    ),
+                    readOnly: true,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Required';
+                      }
+                      final qty = int.tryParse(value);
+                      if (qty == null || qty <= 0) {
+                        return 'Invalid';
+                      }
+                      return null;
+                    },
                   ),
-                  readOnly: true,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Required';
-                    }
-                    final qty = int.tryParse(value);
-                    if (qty == null || qty <= 0) {
-                      return 'Invalid';
-                    }
-                    return null;
-                  },
                 ),
               ),
             ],
