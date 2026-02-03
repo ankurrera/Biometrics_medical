@@ -26,24 +26,37 @@ class MedicationCardWidget extends StatefulWidget {
 class _MedicationCardWidgetState extends State<MedicationCardWidget> {
   late final TextEditingController _nameController;
   late final TextEditingController _dosageController;
-  late final TextEditingController _frequencyController;
   late final TextEditingController _durationController;
   late final TextEditingController _quantityController;
   late final TextEditingController _instructionsController;
 
+  String? _selectedFrequency;
   MedicineType? _medicineType;
   RouteOfAdministration? _route;
   FoodTiming? _foodTiming;
+
+  // Frequency mapping for auto-calculation
+  static const Map<String, int> frequencyMap = {
+    "Once a day": 1,
+    "Twice a day": 2,
+    "Thrice a day": 3,
+    "Four times a day": 4,
+    "Once a week": 1,
+    "Every 8 hours": 3,
+    "Every 12 hours": 2,
+  };
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialData?.medicineName);
     _dosageController = TextEditingController(text: widget.initialData?.dosage);
-    _frequencyController = TextEditingController(text: widget.initialData?.frequency);
+    _selectedFrequency = widget.initialData?.frequency;
     _durationController = TextEditingController(text: widget.initialData?.duration);
     _quantityController = TextEditingController(
-      text: widget.initialData?.quantity.toString(),
+      text: widget.initialData?.quantity != null && widget.initialData!.quantity > 0 
+          ? widget.initialData!.quantity.toString() 
+          : '',
     );
     _instructionsController = TextEditingController(text: widget.initialData?.instructions);
     _medicineType = widget.initialData?.medicineType;
@@ -53,9 +66,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
     // Add listeners to notify parent of changes
     _nameController.addListener(_notifyChange);
     _dosageController.addListener(_notifyChange);
-    _frequencyController.addListener(_notifyChange);
-    _durationController.addListener(_notifyChange);
-    _quantityController.addListener(_notifyChange);
+    _durationController.addListener(_calculateQuantity);
     _instructionsController.addListener(_notifyChange);
   }
 
@@ -63,11 +74,37 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
   void dispose() {
     _nameController.dispose();
     _dosageController.dispose();
-    _frequencyController.dispose();
     _durationController.dispose();
     _quantityController.dispose();
     _instructionsController.dispose();
     super.dispose();
+  }
+
+  /// Auto-calculate quantity based on Duration × Frequency
+  void _calculateQuantity() {
+    if (_durationController.text.isEmpty || _selectedFrequency == null) {
+      _quantityController.text = '';
+      _notifyChange();
+      return;
+    }
+
+    // Try to parse duration as integer (days)
+    final durationText = _durationController.text.trim();
+    final durationMatch = RegExp(r'(\d+)').firstMatch(durationText);
+    
+    if (durationMatch == null) {
+      _quantityController.text = '';
+      _notifyChange();
+      return;
+    }
+
+    final int duration = int.parse(durationMatch.group(1)!);
+    final int frequencyPerDay = frequencyMap[_selectedFrequency] ?? 1;
+
+    final int calculatedQuantity = duration * frequencyPerDay;
+
+    _quantityController.text = calculatedQuantity.toString();
+    _notifyChange();
   }
 
   void _notifyChange() {
@@ -75,7 +112,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
     final medication = MedicationDetails(
       medicineName: _nameController.text,
       dosage: _dosageController.text,
-      frequency: _frequencyController.text,
+      frequency: _selectedFrequency ?? '',
       duration: _durationController.text,
       quantity: quantity,
       medicineType: _medicineType,
@@ -181,14 +218,24 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: TextFormField(
-                  controller: _frequencyController,
+                child: DropdownButtonFormField<String>(
+                  value: _selectedFrequency,
                   decoration: const InputDecoration(
                     labelText: 'Frequency *',
-                    hintText: 'e.g., 1-0-1',
+                    hintText: 'Select',
                   ),
+                  items: frequencyMap.keys.map((frequency) {
+                    return DropdownMenuItem(
+                      value: frequency,
+                      child: Text(frequency),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() => _selectedFrequency = value);
+                    _calculateQuantity();
+                  },
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.isEmpty) {
                       return 'Required';
                     }
                     return null;
@@ -206,12 +253,21 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                 child: TextFormField(
                   controller: _durationController,
                   decoration: const InputDecoration(
-                    labelText: 'Duration *',
-                    hintText: 'e.g., 7 days',
+                    labelText: 'Duration (Days) *',
+                    hintText: 'e.g., 7',
+                    helperText: 'Number of days',
                   ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Required';
+                    }
+                    final days = int.tryParse(value);
+                    if (days == null || days <= 0) {
+                      return 'Invalid';
                     }
                     return null;
                   },
@@ -223,12 +279,15 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                   controller: _quantityController,
                   decoration: const InputDecoration(
                     labelText: 'Quantity *',
-                    hintText: 'e.g., 14',
+                    hintText: 'Auto-calculated',
+                    helperText: 'Auto-calculated',
                   ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
+                  readOnly: true,
+                  enabled: false,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Required';
@@ -245,11 +304,11 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
           ),
           const SizedBox(height: AppSpacing.sm),
 
-          // Medicine Type (Optional dropdown)
+          // Medicine Type * (Required dropdown)
           DropdownButtonFormField<MedicineType>(
             value: _medicineType,
             decoration: const InputDecoration(
-              labelText: 'Medicine Type',
+              labelText: 'Medicine Type *',
               hintText: 'Select type',
             ),
             items: MedicineType.values.map((type) {
@@ -262,17 +321,23 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               setState(() => _medicineType = value);
               _notifyChange();
             },
+            validator: (value) {
+              if (value == null) {
+                return 'Required';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: AppSpacing.sm),
 
-          // Route and Food Timing (Row)
+          // Route * and Food Timing * (Row)
           Row(
             children: [
               Expanded(
                 child: DropdownButtonFormField<RouteOfAdministration>(
                   value: _route,
                   decoration: const InputDecoration(
-                    labelText: 'Route',
+                    labelText: 'Route *',
                     hintText: 'Select',
                   ),
                   items: RouteOfAdministration.values.map((route) {
@@ -285,6 +350,12 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                     setState(() => _route = value);
                     _notifyChange();
                   },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Required';
+                    }
+                    return null;
+                  },
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -292,7 +363,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                 child: DropdownButtonFormField<FoodTiming>(
                   value: _foodTiming,
                   decoration: const InputDecoration(
-                    labelText: 'Food Timing',
+                    labelText: 'Food Timing *',
                     hintText: 'Select',
                   ),
                   items: FoodTiming.values.map((timing) {
@@ -304,6 +375,12 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                   onChanged: (value) {
                     setState(() => _foodTiming = value);
                     _notifyChange();
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Required';
+                    }
+                    return null;
                   },
                 ),
               ),
