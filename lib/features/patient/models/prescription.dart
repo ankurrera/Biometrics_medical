@@ -224,12 +224,28 @@ class Prescription {
 
   // Get doctor notes from metadata
   String? get doctorNotes {
-    return metadata?['doctor_notes'] as String?;
+    final notes = metadata?['doctor_notes'] as String?;
+    if (notes == null || notes.trim().isEmpty) return null;
+    // Check for placeholder values
+    final lowerNotes = notes.trim().toLowerCase();
+    if (lowerNotes == 'mm' || lowerNotes == 'mmm' || 
+        lowerNotes == 'n/a' || lowerNotes == 'na') {
+      return null; // Treat placeholders as no notes
+    }
+    return notes;
   }
 
   // Get patient notes from metadata
   String? get patientNotes {
-    return metadata?['patient_notes'] as String?;
+    final notes = metadata?['patient_notes'] as String?;
+    if (notes == null || notes.trim().isEmpty) return null;
+    // Check for placeholder values
+    final lowerNotes = notes.trim().toLowerCase();
+    if (lowerNotes == 'mm' || lowerNotes == 'mmm' || 
+        lowerNotes == 'n/a' || lowerNotes == 'na') {
+      return null; // Treat placeholders as no notes
+    }
+    return notes;
   }
 
   // Get safety flags from metadata
@@ -277,6 +293,21 @@ class Prescription {
   // Display-friendly registration number
   String? get displayRegistrationNumber {
     return doctorDetails?.medicalRegistrationNumber;
+  }
+
+  // Display-friendly diagnosis (with fallback for empty/placeholder)
+  String get displayDiagnosis {
+    if (diagnosis.trim().isEmpty) {
+      return 'No diagnosis provided';
+    }
+    final lowerDiagnosis = diagnosis.trim().toLowerCase();
+    // Check for common placeholder values
+    if (lowerDiagnosis == 'mm' || lowerDiagnosis == 'mmm' || 
+        lowerDiagnosis == 'n/a' || lowerDiagnosis == 'na' ||
+        lowerDiagnosis == 'test' || lowerDiagnosis == 'placeholder') {
+      return 'Incomplete diagnosis data';
+    }
+    return diagnosis;
   }
 }
 
@@ -477,6 +508,20 @@ class PrescriptionItem {
       default:
         return foodTiming;
     }
+  }
+
+  // Display-friendly instructions (with placeholder detection)
+  String? get displayInstructions {
+    if (instructions == null || instructions!.trim().isEmpty) return null;
+    final lowerInstructions = instructions!.trim().toLowerCase();
+    // Check for placeholder values
+    if (lowerInstructions == 'mm' || lowerInstructions == 'mmm' || 
+        lowerInstructions == 'n/a' || lowerInstructions == 'na' ||
+        lowerInstructions.contains('take food mmm') ||
+        lowerInstructions.contains('take after food mmm')) {
+      return null; // Treat placeholders as no instructions
+    }
+    return instructions;
   }
 }
 
