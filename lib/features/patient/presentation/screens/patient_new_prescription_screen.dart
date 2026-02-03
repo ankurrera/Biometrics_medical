@@ -137,7 +137,7 @@ class _PatientNewPrescriptionScreenState
                   children: [
                     const Icon(Icons.info_outline, color: AppColors.warning),
                     const SizedBox(width: 10),
-                    Flexible(
+                    Expanded(
                       child: Text(
                         'Prescriptions you add here are marked as patient input. '
                         'Clinicians will see this flag.',
