@@ -646,21 +646,21 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
   }
 
   /// Builds the medications header with add button
-  /// Separated from list to work with sliver architecture
+  /// Sliver-safe: Button uses intrinsic height with finite width
   Widget _buildMedicationsHeader() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Expanded(
-          child: Text(
-            'At least one medication required',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
-            ),
+        const Text(
+          'At least one medication required',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
           ),
         ),
+        const SizedBox(height: AppSpacing.sm),
         SizedBox(
-          height: 40,
+          width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: _addMedication,
             icon: const Icon(Icons.add_rounded, size: 20),
@@ -850,30 +850,33 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
                       _medications.isNotEmpty &&
                       !_isLoading;
 
-    return ElevatedButton(
-      onPressed: canSubmit ? _submit : null,
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: Colors.grey.shade300,
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: canSubmit ? _submit : null,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: Colors.grey.shade300,
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                'Submit Prescription',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
-      child: _isLoading
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-          : const Text(
-              'Submit Prescription',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
     );
   }
 }
