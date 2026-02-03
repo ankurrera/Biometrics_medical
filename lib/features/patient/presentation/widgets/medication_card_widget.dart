@@ -277,8 +277,8 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               Expanded(
                 child: Semantics(
                   label: _quantityController.text.isNotEmpty 
-                      ? 'Read-only field. Auto-calculated quantity: ${_quantityController.text}'
-                      : 'Read-only field. Quantity will be calculated automatically based on duration and frequency',
+                      ? 'Quantity, read-only, auto-calculated value: ${_quantityController.text}'
+                      : 'Quantity field, read-only, will be calculated automatically',
                   readOnly: true,
                   child: TextFormField(
                     controller: _quantityController,
