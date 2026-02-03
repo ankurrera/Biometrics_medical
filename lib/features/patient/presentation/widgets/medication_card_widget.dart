@@ -36,7 +36,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
   FoodTiming? _foodTiming;
 
   // Frequency mapping for auto-calculation
-  // Note: Weekly frequencies calculate total quantity for the duration period
+  // All frequencies are daily-based (times per day)
   static const Map<String, int> frequencyMap = {
     "Once a day": 1,
     "Twice a day": 2,
