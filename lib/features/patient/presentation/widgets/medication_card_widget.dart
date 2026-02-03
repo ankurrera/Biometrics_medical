@@ -53,9 +53,10 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
     _dosageController = TextEditingController(text: widget.initialData?.dosage);
     _selectedFrequency = widget.initialData?.frequency;
     _durationController = TextEditingController(text: widget.initialData?.duration);
+    final initialQuantity = widget.initialData?.quantity;
     _quantityController = TextEditingController(
-      text: (widget.initialData?.quantity ?? 0) > 0 
-          ? widget.initialData!.quantity.toString() 
+      text: initialQuantity != null && initialQuantity > 0 
+          ? initialQuantity.toString() 
           : '',
     );
     _instructionsController = TextEditingController(text: widget.initialData?.instructions);
@@ -276,8 +277,8 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
               Expanded(
                 child: Semantics(
                   label: _quantityController.text.isNotEmpty 
-                      ? 'Auto-calculated quantity: ${_quantityController.text}'
-                      : 'Quantity will be calculated automatically',
+                      ? 'Read-only field. Auto-calculated quantity: ${_quantityController.text}'
+                      : 'Read-only field. Quantity will be calculated automatically based on duration and frequency',
                   readOnly: true,
                   child: TextFormField(
                     controller: _quantityController,
