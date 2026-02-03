@@ -51,7 +51,9 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
     super.initState();
     _nameController = TextEditingController(text: widget.initialData?.medicineName);
     _dosageController = TextEditingController(text: widget.initialData?.dosage);
-    _selectedFrequency = widget.initialData?.frequency;
+    // Convert empty frequency to null to avoid dropdown crash
+    final initialFrequency = widget.initialData?.frequency;
+    _selectedFrequency = (initialFrequency == null || initialFrequency.isEmpty) ? null : initialFrequency;
     _durationController = TextEditingController(text: widget.initialData?.duration);
     final initialQuantity = widget.initialData?.quantity;
     _quantityController = TextEditingController(
