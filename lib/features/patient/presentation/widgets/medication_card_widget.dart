@@ -73,6 +73,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
     _nameController.addListener(_notifyChange);
     _dosageController.addListener(_notifyChange);
     _durationController.addListener(_calculateQuantity);
+    _quantityController.addListener(_notifyChange); // Allow manual quantity override
     _instructionsController.addListener(_notifyChange);
   }
 
@@ -294,14 +295,17 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                     controller: _quantityController,
                     decoration: const InputDecoration(
                       labelText: 'Quantity *',
-                      hintText: 'Auto-calculated',
-                      helperText: 'Auto-calculated',
+                      hintText: 'Auto-calculated or enter manually',
+                      helperText: 'Auto-fills but editable',
                     ),
-                    readOnly: true,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
+                    // FIXED: Removed readOnly: true to allow manual quantity entry
+                    // Auto-calculation still works via _calculateQuantity() listener
+                    // on duration/frequency changes, but users can override when needed
+                    // (e.g., for custom prescription amounts that don't match the formula)
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Required';
