@@ -1,3 +1,88 @@
+/// Prescription status enum
+enum PrescriptionStatus {
+  active,
+  expired,
+  upcoming,
+  completed,
+  cancelled;
+
+  String get displayName {
+    switch (this) {
+      case PrescriptionStatus.active:
+        return 'ACTIVE';
+      case PrescriptionStatus.expired:
+        return 'EXPIRED';
+      case PrescriptionStatus.upcoming:
+        return 'UPCOMING';
+      case PrescriptionStatus.completed:
+        return 'COMPLETED';
+      case PrescriptionStatus.cancelled:
+        return 'CANCELLED';
+    }
+  }
+
+  static PrescriptionStatus fromString(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'active':
+        return PrescriptionStatus.active;
+      case 'expired':
+        return PrescriptionStatus.expired;
+      case 'upcoming':
+        return PrescriptionStatus.upcoming;
+      case 'completed':
+        return PrescriptionStatus.completed;
+      case 'cancelled':
+        return PrescriptionStatus.cancelled;
+      default:
+        return PrescriptionStatus.active;
+    }
+  }
+}
+
+/// Verification status enum
+enum VerificationStatus {
+  pending,
+  verified,
+  rejected;
+
+  String get displayName {
+    switch (this) {
+      case VerificationStatus.pending:
+        return 'Pending Verification';
+      case VerificationStatus.verified:
+        return 'Doctor Verified';
+      case VerificationStatus.rejected:
+        return 'Rejected';
+    }
+  }
+
+  static VerificationStatus fromString(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'verified':
+        return VerificationStatus.verified;
+      case 'rejected':
+        return VerificationStatus.rejected;
+      default:
+        return VerificationStatus.pending;
+    }
+  }
+}
+
+/// Entry source enum
+enum EntrySource {
+  doctor,
+  patient;
+
+  String get displayName {
+    switch (this) {
+      case EntrySource.doctor:
+        return 'Doctor Entered';
+      case EntrySource.patient:
+        return 'Patient Entered';
+    }
+  }
+}
+
 /// Prescription model
 class Prescription {
   final String id;
@@ -12,6 +97,7 @@ class Prescription {
   final DateTime? updatedAt;
   final List<PrescriptionItem> items;
   final DoctorInfo? doctor;
+  final Map<String, dynamic>? metadata;
 
   const Prescription({
     required this.id,
@@ -26,6 +112,7 @@ class Prescription {
     this.updatedAt,
     this.items = const [],
     this.doctor,
+    this.metadata,
   });
 
   factory Prescription.fromJson(Map<String, dynamic> json) {
@@ -50,6 +137,7 @@ class Prescription {
               .toList() ??
           [],
       doctor: doctorJson != null ? DoctorInfo.fromJson(doctorJson) : null,
+      metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
 
@@ -65,12 +153,205 @@ class Prescription {
       'status': status,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
+      'metadata': metadata,
     };
   }
 
+  // Status helpers
+  PrescriptionStatus get prescriptionStatus => PrescriptionStatus.fromString(status);
   bool get isActive => status == 'active';
   bool get isCompleted => status == 'completed';
   bool get isCancelled => status == 'cancelled';
+  bool get isExpired => status == 'expired';
+  bool get isUpcoming => status == 'upcoming';
+
+  // Computed status based on dates
+  PrescriptionStatus get computedStatus {
+    final now = DateTime.now();
+    final prescriptionDate = this.prescriptionDate;
+    final validUntil = this.validUntil;
+    final currentStatus = prescriptionStatus;
+
+    if (currentStatus == PrescriptionStatus.cancelled) return PrescriptionStatus.cancelled;
+    if (currentStatus == PrescriptionStatus.completed) return PrescriptionStatus.completed;
+
+    if (prescriptionDate != null && prescriptionDate.isAfter(now)) {
+      return PrescriptionStatus.upcoming;
+    }
+    if (validUntil != null && validUntil.isBefore(now)) {
+      return PrescriptionStatus.expired;
+    }
+    return PrescriptionStatus.active;
+  }
+
+  // Entry source
+  EntrySource get entrySource => patientEntered ? EntrySource.patient : EntrySource.doctor;
+
+  // Verification status from metadata
+  VerificationStatus get verificationStatus {
+    final status = metadata?['verification_status'] as String?;
+    return VerificationStatus.fromString(status);
+  }
+
+  // Get doctor details from metadata (for patient-entered prescriptions)
+  PrescriptionDoctorDetails? get doctorDetails {
+    final details = metadata?['doctor_details'] as Map<String, dynamic>?;
+    if (details == null) return null;
+    return PrescriptionDoctorDetails.fromJson(details);
+  }
+
+  // Get prescription date from metadata
+  DateTime? get prescriptionDate {
+    final metadataInfo = metadata?['metadata'] as Map<String, dynamic>?;
+    final dateStr = metadataInfo?['prescription_date'] as String?;
+    if (dateStr == null) return null;
+    return DateTime.tryParse(dateStr);
+  }
+
+  // Get valid until date from metadata
+  DateTime? get validUntil {
+    final metadataInfo = metadata?['metadata'] as Map<String, dynamic>?;
+    final dateStr = metadataInfo?['valid_until'] as String?;
+    if (dateStr == null) return null;
+    return DateTime.tryParse(dateStr);
+  }
+
+  // Get prescription type from metadata
+  String? get prescriptionType {
+    final metadataInfo = metadata?['metadata'] as Map<String, dynamic>?;
+    return metadataInfo?['prescription_type'] as String?;
+  }
+
+  // Get doctor notes from metadata
+  String? get doctorNotes {
+    return metadata?['doctor_notes'] as String?;
+  }
+
+  // Get patient notes from metadata
+  String? get patientNotes {
+    return metadata?['patient_notes'] as String?;
+  }
+
+  // Get safety flags from metadata
+  SafetyFlags? get safetyFlags {
+    final flags = metadata?['safety_flags'] as Map<String, dynamic>?;
+    if (flags == null) return null;
+    return SafetyFlags.fromJson(flags);
+  }
+
+  // Get upload info from metadata
+  UploadInfo? get uploadInfo {
+    final info = metadata?['upload_info'] as Map<String, dynamic>?;
+    if (info == null) return null;
+    return UploadInfo.fromJson(info);
+  }
+
+  // Display-friendly doctor name
+  String get displayDoctorName {
+    // Try from doctor details first (for patient-entered)
+    final details = doctorDetails;
+    if (details != null && details.doctorName.isNotEmpty) {
+      return details.doctorName;
+    }
+    // Try from linked doctor profile
+    if (doctor != null && doctor!.fullName.isNotEmpty) {
+      return 'Dr. ${doctor!.fullName}';
+    }
+    // Fallback for patient-entered
+    if (patientEntered) {
+      return 'Patient-entered';
+    }
+    return 'Not specified';
+  }
+
+  // Display-friendly clinic name
+  String? get displayClinicName {
+    return doctorDetails?.hospitalClinicName;
+  }
+
+  // Display-friendly specialization
+  String? get displaySpecialization {
+    return doctorDetails?.specialization;
+  }
+
+  // Display-friendly registration number
+  String? get displayRegistrationNumber {
+    return doctorDetails?.medicalRegistrationNumber;
+  }
+}
+
+/// Doctor details from prescription metadata (for display)
+class PrescriptionDoctorDetails {
+  final String doctorName;
+  final String? specialization;
+  final String? hospitalClinicName;
+  final String? medicalRegistrationNumber;
+  final bool signatureUploaded;
+
+  const PrescriptionDoctorDetails({
+    required this.doctorName,
+    this.specialization,
+    this.hospitalClinicName,
+    this.medicalRegistrationNumber,
+    this.signatureUploaded = false,
+  });
+
+  factory PrescriptionDoctorDetails.fromJson(Map<String, dynamic> json) {
+    return PrescriptionDoctorDetails(
+      doctorName: json['doctor_name'] as String? ?? '',
+      specialization: json['specialization'] as String?,
+      hospitalClinicName: json['hospital_clinic_name'] as String?,
+      medicalRegistrationNumber: json['medical_registration_number'] as String?,
+      signatureUploaded: json['signature_uploaded'] as bool? ?? false,
+    );
+  }
+}
+
+/// Safety flags model
+class SafetyFlags {
+  final bool? allergiesMentioned;
+  final bool? pregnancyBreastfeeding;
+  final bool? chronicConditionLinked;
+  final String? notes;
+
+  const SafetyFlags({
+    this.allergiesMentioned,
+    this.pregnancyBreastfeeding,
+    this.chronicConditionLinked,
+    this.notes,
+  });
+
+  factory SafetyFlags.fromJson(Map<String, dynamic> json) {
+    return SafetyFlags(
+      allergiesMentioned: json['allergies_mentioned'] as bool?,
+      pregnancyBreastfeeding: json['pregnancy_breastfeeding'] as bool?,
+      chronicConditionLinked: json['chronic_condition_linked'] as bool?,
+      notes: json['notes'] as String?,
+    );
+  }
+}
+
+/// Upload info model
+class UploadInfo {
+  final String? fileName;
+  final String? fileType;
+  final int? fileSizeBytes;
+
+  const UploadInfo({
+    this.fileName,
+    this.fileType,
+    this.fileSizeBytes,
+  });
+
+  factory UploadInfo.fromJson(Map<String, dynamic> json) {
+    return UploadInfo(
+      fileName: json['file_name'] as String?,
+      fileType: json['file_type'] as String?,
+      fileSizeBytes: json['file_size_bytes'] as int?,
+    );
+  }
+
+  bool get hasFile => fileName != null && fileName!.isNotEmpty;
 }
 
 /// Individual prescription item (medicine)
@@ -85,6 +366,9 @@ class PrescriptionItem {
   final int? quantity;
   final bool isDispensed;
   final DateTime createdAt;
+  final String? medicineType;
+  final String? route;
+  final String? foodTiming;
 
   const PrescriptionItem({
     required this.id,
@@ -97,6 +381,9 @@ class PrescriptionItem {
     this.quantity,
     required this.isDispensed,
     required this.createdAt,
+    this.medicineType,
+    this.route,
+    this.foodTiming,
   });
 
   factory PrescriptionItem.fromJson(Map<String, dynamic> json) {
@@ -111,6 +398,9 @@ class PrescriptionItem {
       quantity: json['quantity'] as int?,
       isDispensed: json['is_dispensed'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
+      medicineType: json['medicine_type'] as String?,
+      route: json['route'] as String?,
+      foodTiming: json['food_timing'] as String?,
     );
   }
 
@@ -126,7 +416,67 @@ class PrescriptionItem {
       'quantity': quantity,
       'is_dispensed': isDispensed,
       'created_at': createdAt.toIso8601String(),
+      'medicine_type': medicineType,
+      'route': route,
+      'food_timing': foodTiming,
     };
+  }
+
+  // Display-friendly medicine type
+  String? get displayMedicineType {
+    if (medicineType == null) return null;
+    switch (medicineType) {
+      case 'tablet':
+        return 'Tablet';
+      case 'syrup':
+        return 'Syrup';
+      case 'injection':
+        return 'Injection';
+      case 'ointment':
+        return 'Ointment';
+      case 'capsule':
+        return 'Capsule';
+      case 'drops':
+        return 'Drops';
+      default:
+        return medicineType;
+    }
+  }
+
+  // Display-friendly route
+  String? get displayRoute {
+    if (route == null) return null;
+    switch (route) {
+      case 'oral':
+        return 'Oral';
+      case 'intravenous':
+        return 'IV (Intravenous)';
+      case 'intramuscular':
+        return 'IM (Intramuscular)';
+      case 'topical':
+        return 'Topical';
+      case 'sublingual':
+        return 'Sublingual';
+      default:
+        return route;
+    }
+  }
+
+  // Display-friendly food timing
+  String? get displayFoodTiming {
+    if (foodTiming == null) return null;
+    switch (foodTiming) {
+      case 'beforeFood':
+        return 'Before Food';
+      case 'afterFood':
+        return 'After Food';
+      case 'withFood':
+        return 'With Food';
+      case 'empty':
+        return 'Empty Stomach';
+      default:
+        return foodTiming;
+    }
   }
 }
 

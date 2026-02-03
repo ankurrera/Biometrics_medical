@@ -176,6 +176,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'patientPrivacy',
         builder: (context, state) => const PrivacySettingsScreen(),
       ),
+      GoRoute(
+        path: RouteNames.patientAddPrescription,
+        name: 'patientAddPrescription',
+        builder: (context, state) => const AddPrescriptionScreen(),
+      ),
 
       // Doctor Routes
       GoRoute(
