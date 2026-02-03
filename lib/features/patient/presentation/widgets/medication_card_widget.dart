@@ -115,7 +115,10 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
 
   void _notifyChange() {
     final quantity = int.tryParse(_quantityController.text) ?? 0;
+
+    // FIX: Preserve the existing ID using widget.initialData?.id
     final medication = MedicationDetails(
+      id: widget.initialData?.id,  // <--- ADD THIS LINE
       medicineName: _nameController.text,
       dosage: _dosageController.text,
       frequency: _selectedFrequency ?? '',
@@ -124,10 +127,11 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
       medicineType: _medicineType,
       route: _route,
       foodTiming: _foodTiming,
-      instructions: _instructionsController.text.isNotEmpty 
-          ? _instructionsController.text 
+      instructions: _instructionsController.text.isNotEmpty
+          ? _instructionsController.text
           : null,
     );
+
     widget.onChanged(medication);
   }
 
