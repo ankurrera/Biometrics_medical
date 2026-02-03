@@ -91,7 +91,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
   void _calculateQuantity() {
     if (_durationController.text.isEmpty || _selectedFrequency == null) {
       _quantityController.text = '';
-      _notifyChange();
+      // Note: _notifyChange() will be called by _quantityController listener
       return;
     }
 
@@ -101,7 +101,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
     
     if (duration == null) {
       _quantityController.text = '';
-      _notifyChange();
+      // Note: _notifyChange() will be called by _quantityController listener
       return;
     }
 
@@ -110,7 +110,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
     final int calculatedQuantity = duration * frequencyPerDay;
 
     _quantityController.text = calculatedQuantity.toString();
-    _notifyChange();
+    // Note: _notifyChange() will be called by _quantityController listener
   }
 
   void _notifyChange() {
