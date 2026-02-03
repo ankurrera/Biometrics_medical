@@ -22,6 +22,7 @@ abstract class RouteNames {
   static const String patientProfile = '/patient/profile';
   static const String patientPrivacy = '/patient/privacy';
   static const String patientNewPrescription = '/patient/new-prescription';
+  static const String patientAddPrescription = '/patient/add-prescription';
 
   // Doctor
   static const String doctorDashboard = '/doctor';
