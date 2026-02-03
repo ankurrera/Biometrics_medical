@@ -843,9 +843,9 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
           _buildInfoRow(
             context,
             'Signature',
-            details?.signatureUploaded == true ? 'Uploaded' : 'Not uploaded',
+            (details?.signatureUploaded ?? false) ? 'Uploaded' : 'Not uploaded',
             Icons.draw_rounded,
-            valueColor: details?.signatureUploaded == true 
+            valueColor: (details?.signatureUploaded ?? false) 
                 ? AppColors.success 
                 : AppColors.warning,
           ),
@@ -1072,7 +1072,7 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
               _buildMedChip('Dosage', item.dosage, Icons.analytics_outlined),
               _buildMedChip('Frequency', item.frequency, Icons.schedule_outlined),
               if (item.duration != null)
-                _buildMedChip('Duration', '${item.duration} days', Icons.timer_outlined),
+                _buildMedChip('Duration', item.duration!, Icons.timer_outlined),
               if (item.quantity != null)
                 _buildMedChip('Quantity', '${item.quantity}', Icons.inventory_2_outlined),
               if (item.displayRoute != null)

@@ -170,9 +170,10 @@ class Prescription {
     final now = DateTime.now();
     final prescriptionDate = this.prescriptionDate;
     final validUntil = this.validUntil;
+    final currentStatus = prescriptionStatus;
 
-    if (status == 'cancelled') return PrescriptionStatus.cancelled;
-    if (status == 'completed') return PrescriptionStatus.completed;
+    if (currentStatus == PrescriptionStatus.cancelled) return PrescriptionStatus.cancelled;
+    if (currentStatus == PrescriptionStatus.completed) return PrescriptionStatus.completed;
 
     if (prescriptionDate != null && prescriptionDate.isAfter(now)) {
       return PrescriptionStatus.upcoming;
