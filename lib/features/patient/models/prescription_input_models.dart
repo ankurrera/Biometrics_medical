@@ -195,7 +195,10 @@ class MedicationDetails {
         dosage.isNotEmpty &&
         frequency.isNotEmpty &&
         duration.isNotEmpty &&
-        quantity > 0;
+        quantity > 0 &&
+        medicineType != null &&
+        route != null &&
+        foodTiming != null;
   }
 }
 
