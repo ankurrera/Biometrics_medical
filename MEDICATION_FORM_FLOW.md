@@ -69,7 +69,6 @@
 | Twice a day           | "Twice a day"     | 2         | 7 days × 2 = 14     |
 | Thrice a day          | "Thrice a day"    | 3         | 7 days × 3 = 21     |
 | Four times a day      | "Four times a day"| 4         | 7 days × 4 = 28     |
-| Once a week           | "Once a week"     | 1         | 7 days × 1 = 7      |
 | Every 8 hours         | "Every 8 hours"   | 3         | 7 days × 3 = 21     |
 | Every 12 hours        | "Every 12 hours"  | 2         | 7 days × 2 = 14     |
 

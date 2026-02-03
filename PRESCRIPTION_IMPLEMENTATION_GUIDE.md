@@ -72,7 +72,6 @@ The following frequencies are available in the dropdown:
 | Twice a day       | 2             | 7 days × 2 = 14     |
 | Thrice a day      | 3             | 7 days × 3 = 21     |
 | Four times a day  | 4             | 7 days × 4 = 28     |
-| Once a week       | 1             | 7 days × 1 = 7      |
 | Every 8 hours     | 3             | 7 days × 3 = 21     |
 | Every 12 hours    | 2             | 7 days × 2 = 14     |
 
@@ -117,7 +116,6 @@ Quantity recalculates when:
 - Twice a day
 - Thrice a day
 - Four times a day
-- Once a week
 - Every 8 hours
 - Every 12 hours
 
