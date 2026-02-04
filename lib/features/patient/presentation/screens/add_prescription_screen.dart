@@ -151,8 +151,16 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
     }
 
     // Diagnosis validation
-    if (_diagnosisController.text.trim().isEmpty) {
+    final diagnosis = _diagnosisController.text.trim();
+    if (diagnosis.isEmpty) {
       _showError('Please enter a diagnosis');
+      return false;
+    }
+    
+    // Check for placeholder values in diagnosis
+    if (diagnosis.toLowerCase() == 'mm' || diagnosis.toLowerCase() == 'mmm' || 
+        diagnosis.toLowerCase() == 'n/a' || diagnosis.toLowerCase() == 'na') {
+      _showError('Please enter a valid diagnosis (not a placeholder)');
       return false;
     }
 
@@ -163,7 +171,7 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
     }
 
     if (!_medications.every((med) => med.isValid)) {
-      _showError('Please complete all medication fields');
+      _showError('Please complete all medication fields including type, route, and timing');
       return false;
     }
 
@@ -619,6 +627,13 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
               if (value == null || value.trim().isEmpty) {
                 return 'Diagnosis is required';
               }
+              // Check for placeholder values
+              final lowerValue = value.trim().toLowerCase();
+              if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                  lowerValue == 'n/a' || lowerValue == 'na' ||
+                  lowerValue == 'test' || lowerValue == 'placeholder') {
+                return 'Please enter a valid diagnosis';
+              }
               return null;
             },
           ),
@@ -630,6 +645,18 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
               hintText: "Doctor's notes or instructions",
             ),
             maxLines: 3,
+            validator: (value) {
+              // Optional field, but check for placeholders if provided
+              if (value != null && value.trim().isNotEmpty) {
+                final lowerValue = value.trim().toLowerCase();
+                if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                    lowerValue == 'n/a' || lowerValue == 'na' ||
+                    lowerValue == 'test' || lowerValue == 'placeholder') {
+                  return 'Please remove placeholder text or leave empty';
+                }
+              }
+              return null;
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           TextFormField(
@@ -639,6 +666,18 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
               hintText: 'Your notes or observations',
             ),
             maxLines: 2,
+            validator: (value) {
+              // Optional field, but check for placeholders if provided
+              if (value != null && value.trim().isNotEmpty) {
+                final lowerValue = value.trim().toLowerCase();
+                if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                    lowerValue == 'n/a' || lowerValue == 'na' ||
+                    lowerValue == 'test' || lowerValue == 'placeholder') {
+                  return 'Please remove placeholder text or leave empty';
+                }
+              }
+              return null;
+            },
           ),
         ],
       ),

@@ -196,7 +196,7 @@ class _PrescriptionCard extends StatelessWidget {
                 children: [
                   // Diagnosis / Condition (Primary Title)
                   Text(
-                    prescription.diagnosis,
+                    prescription.displayDiagnosis,
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
@@ -927,7 +927,7 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
           _buildInfoRow(
             context,
             'Diagnosis',
-            prescription.diagnosis,
+            prescription.displayDiagnosis,
             Icons.healing_rounded,
           ),
           if (prescription.doctorNotes != null && prescription.doctorNotes!.isNotEmpty) ...[
@@ -1082,7 +1082,7 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
             ],
           ),
 
-          if (item.instructions != null && item.instructions!.isNotEmpty) ...[
+          if (item.displayInstructions != null) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
@@ -1101,7 +1101,7 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      item.instructions!,
+                      item.displayInstructions!,
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.info,

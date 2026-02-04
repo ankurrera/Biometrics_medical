@@ -315,7 +315,21 @@ class CompletePrescriptionInput {
     return true;
   }
 
+  /// Determines if prescription qualifies as "Doctor Verified"
+  /// ALL of the following must be present:
+  /// - Doctor name
+  /// - Medical registration number
+  /// - Uploaded prescription file
+  bool get canBeVerified {
+    return doctorDetails.doctorName.trim().isNotEmpty &&
+        doctorDetails.medicalRegistrationNumber.trim().isNotEmpty &&
+        upload.hasFile;
+  }
+
   Map<String, dynamic> toJson() {
+    // Determine verification status based on completeness
+    final verificationStatus = canBeVerified ? 'verified' : 'pending';
+    
     return {
       'metadata': metadata.toJson(),
       'doctor_details': doctorDetails.toJson(),
@@ -326,7 +340,7 @@ class CompletePrescriptionInput {
       'safety_flags': safetyFlags.toJson(),
       'upload_info': upload.toJson(),
       'declaration_accepted': declarationAccepted,
-      'verification_status': 'pending',
+      'verification_status': verificationStatus,
       'created_at': DateTime.now().toIso8601String(),
     };
   }
