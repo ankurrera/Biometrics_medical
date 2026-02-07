@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routing/route_names.dart';
 import '../../../auth/providers/auth_provider.dart';
-// Ensure this import is present for the provider:
+// Ensure this import is present for the providers:
 import '../screens/notifications_screen.dart';
 // ... rest of the file
 

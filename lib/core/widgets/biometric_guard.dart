@@ -26,10 +26,9 @@ class BiometricGuard extends StatefulWidget {
   State<BiometricGuard> createState() => _BiometricGuardState();
 }
 
-class _BiometricGuardState extends State<BiometricGuard> with WidgetsBindingObserver, RouteAware {
+class _BiometricGuardState extends State<BiometricGuard> with WidgetsBindingObserver {
   bool _isAuthenticated = false;
   bool _isAuthenticating = false;
-  bool _biometricEnabled = false;
 
   @override
   void initState() {
@@ -64,8 +63,6 @@ class _BiometricGuardState extends State<BiometricGuard> with WidgetsBindingObse
   Future<void> _checkBiometricStatus() async {
     // Check if biometric is enabled in settings
     final enabled = await SecureStorageService.instance.isBiometricEnabled();
-
-    if (mounted) setState(() => _biometricEnabled = enabled);
 
     if (enabled) {
       // If enabled, we MUST authenticate

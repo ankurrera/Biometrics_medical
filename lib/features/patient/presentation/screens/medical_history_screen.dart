@@ -413,7 +413,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
     bool isPublic,
   ) async {
     try {
-      // Get patient data from provider
+      // Get patient data from providers
       final patientData = await ref.read(patientDataProvider.future);
       if (patientData == null) {
         throw Exception('Patient profile not found');

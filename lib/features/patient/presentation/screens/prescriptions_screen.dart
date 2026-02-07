@@ -5,19 +5,11 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../routing/route_names.dart';
 import '../../models/prescription.dart';
 import '../../providers/patient_provider.dart';
 
 /// Professional My Prescriptions List Screen
-/// 
-/// Features:
-/// - Card-based layout (no timeline)
-/// - Status badges (ACTIVE/EXPIRED/UPCOMING)
-/// - Verification badges (Doctor Verified/Patient Entered)
-/// - Complete doctor information
-/// - Validity period display
-/// - Medication count
-/// - Quick action buttons
 class PrescriptionsScreen extends ConsumerWidget {
   const PrescriptionsScreen({super.key});
 
@@ -33,7 +25,7 @@ class PrescriptionsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded),
-            onPressed: () => context.push('/patient/add-prescription'),
+            onPressed: () => context.push(RouteNames.patientAddPrescription),
             tooltip: 'Add Prescription',
           ),
         ],
@@ -63,9 +55,9 @@ class PrescriptionsScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
-              Text('Error loading prescriptions',
+              const Text('Error loading prescriptions',
                   style: TextStyle(color: AppColors.error)),
               const SizedBox(height: 8),
               ElevatedButton(
@@ -77,7 +69,7 @@ class PrescriptionsScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/patient/add-prescription'),
+        onPressed: () => context.push(RouteNames.patientAddPrescription),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add Prescription'),
         backgroundColor: AppColors.primary,
@@ -124,7 +116,7 @@ class PrescriptionsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => context.push('/patient/add-prescription'),
+              onPressed: () => context.push(RouteNames.patientAddPrescription),
               icon: const Icon(Icons.add_rounded),
               label: const Text('Add Prescription'),
               style: ElevatedButton.styleFrom(
@@ -632,7 +624,7 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
                   _buildEmptyMedications(context)
                 else
                   ...prescription.items.asMap().entries.map(
-                    (entry) => _buildMedicationCard(context, entry.value, entry.key + 1),
+                        (entry) => _buildMedicationCard(context, entry.value, entry.key + 1),
                   ),
 
                 // Safety Information
@@ -736,10 +728,11 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
         icon = Icons.cancel_rounded;
         break;
       case VerificationStatus.pending:
-      default:
+      default: // Added default back for safety if enum changes or value is missing
         color = prescription.patientEntered ? AppColors.info : AppColors.doctor;
         text = prescription.patientEntered ? 'Patient Entered' : 'Doctor Issued';
         icon = prescription.patientEntered ? Icons.person_outline_rounded : Icons.medical_services_outlined;
+        break;
     }
 
     return Container(
@@ -792,7 +785,6 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
 
   Widget _buildDoctorSection(BuildContext context) {
     final details = prescription.doctorDetails;
-    final doctor = prescription.doctor;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -845,8 +837,8 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
             'Signature',
             (details?.signatureUploaded ?? false) ? 'Uploaded' : 'Not uploaded',
             Icons.draw_rounded,
-            valueColor: (details?.signatureUploaded ?? false) 
-                ? AppColors.success 
+            valueColor: (details?.signatureUploaded ?? false)
+                ? AppColors.success
                 : AppColors.warning,
           ),
         ],
@@ -1339,13 +1331,13 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
   }
 
   Widget _buildInfoRow(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon, {
-    Color? valueColor,
-    String? labelSuffix,
-  }) {
+      BuildContext context,
+      String label,
+      String value,
+      IconData icon, {
+        Color? valueColor,
+        String? labelSuffix,
+      }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1410,4 +1402,3 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
     }
   }
 }
-

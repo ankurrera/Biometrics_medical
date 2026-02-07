@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,11 +5,9 @@ import '../../../services/biometric_service.dart';
 import '../../../services/secure_storage_service.dart';
 import '../../../services/supabase_service.dart';
 import '../../../services/kyc_service.dart';
-import '../../../services/two_factor_service.dart';
 import '../../../services/device_service.dart';
 import '../../../services/audit_service.dart';
 import '../../../services/auth_controller.dart';
-import '../../patient/providers/patient_provider.dart';
 import '../../shared/models/user_profile.dart';
 
 /// Provider for auth state changes
@@ -88,7 +84,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       // 1. Update Storage
       await _storage.setBiometricEnabled(enable);
 
-      // 2. CRITICAL FIX: Force the UI provider to refresh immediately
+      // 2. CRITICAL FIX: Force the UI providers to refresh immediately
       ref.invalidate(biometricEnabledProvider);
 
     } catch (e) {
