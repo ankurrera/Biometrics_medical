@@ -6,17 +6,14 @@ class FamilyService {
   static final instance = FamilyService._();
   final _supabase = Supabase.instance.client;
 
-  /// Send a connection request by email (Privacy safe)
+  /// Send a connection request by email
   Future<void> sendFamilyRequest(String email, String label) async {
     print('[FamilyService] Sending request to: $email');
-
     try {
       final response = await _supabase.rpc('send_family_request', params: {
         'target_email': email.trim(),
         'relation_label': label.trim(),
       });
-
-      print('[FamilyService] RPC Response: $response');
 
       if (response['success'] != true) {
         throw Exception(response['message'] ?? 'Failed to send request');
@@ -27,23 +24,34 @@ class FamilyService {
     }
   }
 
-  /// Get list of active family members (Accepted links)
+  /// Get list of active family members (Bidirectional)
+  /// Returns the *other* person in the link.
   Future<List<FamilyMember>> getActiveFamilyMembers() async {
     try {
+      final userId = _supabase.auth.currentUser!.id;
+
+      // Fetch links where I am Requester OR Target, and status is accepted
       final response = await _supabase
           .from('family_account_links')
-          .select('*, target:profiles!target_user_id(*)')
-          .eq('requester_id', _supabase.auth.currentUser!.id)
-          .eq('status', 'accepted');
+          .select('*, requester:profiles!requester_id(*), target:profiles!target_user_id(*)')
+          .eq('status', 'accepted')
+          .or('requester_id.eq.$userId,target_user_id.eq.$userId');
 
       final List<dynamic> data = response as List<dynamic>;
 
-      // Filter out entries where the target profile is missing (null)
-      // This prevents the "Null is not a subtype of Map" crash
-      return data
-          .where((item) => item['target'] != null)
-          .map((e) => FamilyMember.fromJson(e))
-          .toList();
+      return data.map((item) {
+        // Determine relationship direction to show the OTHER person
+        final isMeRequester = item['requester_id'] == userId;
+        final otherProfileMap = isMeRequester ? item['target'] : item['requester'];
+
+        if (otherProfileMap == null) return null;
+
+        return FamilyMember(
+          linkId: item['id'],
+          profile: UserProfile.fromJson(otherProfileMap),
+          label: item['label'] ?? 'Family',
+        );
+      }).whereType<FamilyMember>().toList();
 
     } catch (e) {
       print('[FamilyService] Error fetching members: $e');
@@ -55,8 +63,6 @@ class FamilyService {
   Future<List<FamilyRequest>> getIncomingRequests() async {
     try {
       final userId = _supabase.auth.currentUser!.id;
-      print('[FamilyService] Fetching requests for target_user_id: $userId');
-
       final response = await _supabase
           .from('family_account_links')
           .select('*, requester:profiles!requester_id(*)')
@@ -64,24 +70,42 @@ class FamilyService {
           .eq('status', 'pending');
 
       final List<dynamic> data = response as List<dynamic>;
-      print('[FamilyService] Raw response count: ${data.length}');
 
-      // CRITICAL FIX: Filter out requests where 'requester' is null.
-      // This happens if the user who sent the request has a broken/missing profile.
-      final validRequests = data.where((item) {
-        if (item['requester'] == null) {
-          print('[FamilyService] Warning: Found request ${item['id']} with MISSING requester profile. Ignoring.');
-          return false;
-        }
-        return true;
-      }).toList();
-
-      print('[FamilyService] Valid requests after filtering: ${validRequests.length}');
-
-      return validRequests.map((e) => FamilyRequest.fromJson(e)).toList();
+      return data
+          .where((item) => item['requester'] != null)
+          .map((e) => FamilyRequest.fromJson(e))
+          .toList();
     } catch (e) {
-      print('[FamilyService] Error fetching requests: $e');
-      return []; // Return empty list to prevent UI crash
+      print('[FamilyService] Error fetching incoming requests: $e');
+      return [];
+    }
+  }
+
+  /// Get pending outgoing requests (Where I am the requester)
+  /// NEW: Added this method to show "Sent Requests"
+  Future<List<FamilyMember>> getOutgoingRequests() async {
+    try {
+      final userId = _supabase.auth.currentUser!.id;
+      final response = await _supabase
+          .from('family_account_links')
+          .select('*, target:profiles!target_user_id(*)')
+          .eq('requester_id', userId)
+          .eq('status', 'pending');
+
+      final List<dynamic> data = response as List<dynamic>;
+
+      // Map to FamilyMember, where profile is the Target
+      return data
+          .where((item) => item['target'] != null)
+          .map((item) => FamilyMember(
+        linkId: item['id'],
+        profile: UserProfile.fromJson(item['target']),
+        label: item['label'] ?? 'Family',
+      ))
+          .toList();
+    } catch (e) {
+      print('[FamilyService] Error fetching outgoing requests: $e');
+      return [];
     }
   }
 
@@ -94,7 +118,7 @@ class FamilyService {
         .eq('id', linkId);
   }
 
-  /// Revoke access (Unlink)
+  /// Revoke/Cancel access
   Future<void> revokeAccess(String linkId) async {
     await _supabase
         .from('family_account_links')
@@ -114,9 +138,8 @@ class FamilyMember {
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) {
     return FamilyMember(
-      linkId: json['id'],
-      // We already filtered for nulls in the service, so this is safe now
-      profile: UserProfile.fromJson(json['target']),
+      linkId: json['linkId'] ?? json['id'],
+      profile: UserProfile.fromJson(json['profile'] ?? json['target'] ?? json['requester']),
       label: json['label'] ?? 'Family',
     );
   }
@@ -132,7 +155,6 @@ class FamilyRequest {
   factory FamilyRequest.fromJson(Map<String, dynamic> json) {
     return FamilyRequest(
       linkId: json['id'],
-      // We already filtered for nulls in the service, so this is safe now
       requester: UserProfile.fromJson(json['requester']),
       label: json['label'] ?? 'Family',
     );

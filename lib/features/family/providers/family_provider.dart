@@ -8,31 +8,26 @@ import '../data/family_service.dart';
 
 // --- State Providers ---
 
-/// The ID of the currently "active" profile (Self or Family Member)
 final activeProfileIdProvider = StateProvider<String?>((ref) {
   return ref.watch(authStateProvider).valueOrNull?.id;
 });
 
-/// The full profile object of the currently active context
 final activeContextProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final activeId = ref.watch(activeProfileIdProvider);
   final authUser = ref.watch(authStateProvider).valueOrNull;
 
   if (activeId == null || authUser == null) return null;
 
-  // If active ID matches auth ID, return own profile (cached)
   if (activeId == authUser.id) {
     return ref.watch(currentProfileProvider).valueOrNull;
   }
 
-  // Otherwise, fetch linked profile
   try {
     final data = await SupabaseService.instance.client
         .from('profiles')
         .select()
         .eq('id', activeId)
         .single();
-
     return UserProfile.fromJson(data);
   } catch (e) {
     return null;
@@ -49,6 +44,11 @@ final incomingRequestsProvider = StreamProvider<List<FamilyRequest>>((ref) async
   yield await FamilyService.instance.getIncomingRequests();
 });
 
+// NEW: Provider for outgoing requests (Sent by me, pending)
+final outgoingRequestsProvider = StreamProvider<List<FamilyMember>>((ref) async* {
+  yield await FamilyService.instance.getOutgoingRequests();
+});
+
 // --- Controller ---
 
 class FamilyController extends StateNotifier<AsyncValue<void>> {
@@ -59,6 +59,8 @@ class FamilyController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       await FamilyService.instance.sendFamilyRequest(email, label);
+      // REFRESH outgoing requests immediately so the UI updates
+      ref.invalidate(outgoingRequestsProvider);
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -71,7 +73,16 @@ class FamilyController extends StateNotifier<AsyncValue<void>> {
       ref.invalidate(incomingRequestsProvider);
       if (accept) ref.invalidate(familyMembersProvider);
     } catch (e) {
-      // Handle error implicitly
+      // Handle error
+    }
+  }
+
+  Future<void> cancelRequest(String linkId) async {
+    try {
+      await FamilyService.instance.revokeAccess(linkId);
+      ref.invalidate(outgoingRequestsProvider);
+    } catch (e) {
+      // Handle error
     }
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-// Ensure this import matches your file structure exactly
 import '../../providers/family_provider.dart';
 
 class FamilyMembersScreen extends ConsumerStatefulWidget {
@@ -12,7 +11,6 @@ class FamilyMembersScreen extends ConsumerStatefulWidget {
 }
 
 class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
-  // We keep track of loading state locally for the dialog
   bool _isSending = false;
 
   void _showAddMemberDialog() {
@@ -21,7 +19,7 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
 
     showDialog(
       context: context,
-      barrierDismissible: !_isSending, // Prevent closing while sending
+      barrierDismissible: !_isSending,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
@@ -73,39 +71,28 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
                     return;
                   }
 
-                  // 1. Show Loading in Dialog
                   setState(() => _isSending = true);
 
-                  // 2. Send Request via Provider
                   await ref
                       .read(familyControllerProvider.notifier)
                       .sendRequest(email, label);
 
-                  // 3. Check Result
-                  // We check the provider state to see if it failed
                   final state = ref.read(familyControllerProvider);
 
                   if (context.mounted) {
-                    // Stop Loading
                     setState(() => _isSending = false);
-                    Navigator.pop(context); // Close Dialog
+                    Navigator.pop(context);
 
                     if (state.hasError) {
-                      // SHOW THE REAL ERROR (e.g. "Cannot link to yourself")
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            state.error
-                                .toString()
-                                .replaceAll('Exception:', '')
-                                .trim(),
+                            state.error.toString().replaceAll('Exception:', '').trim(),
                           ),
                           backgroundColor: AppColors.error,
-                          duration: const Duration(seconds: 4),
                         ),
                       );
                     } else {
-                      // SHOW SUCCESS
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Request sent successfully!'),
@@ -116,11 +103,7 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
                   }
                 },
                 child: _isSending
-                    ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Text('Send Invite'),
               ),
             ],
@@ -134,6 +117,7 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
   Widget build(BuildContext context) {
     final membersAsync = ref.watch(familyMembersProvider);
     final requestsAsync = ref.watch(incomingRequestsProvider);
+    final outgoingAsync = ref.watch(outgoingRequestsProvider); // Watch outgoing requests
 
     return Scaffold(
       appBar: AppBar(title: const Text('Family & Dependents')),
@@ -142,24 +126,24 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
         icon: const Icon(Icons.person_add),
         label: const Text('Add Member'),
       ),
-      // Add RefreshIndicator so users can check for new requests
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(familyMembersProvider);
           ref.invalidate(incomingRequestsProvider);
-          // Wait for providers to refresh
+          ref.invalidate(outgoingRequestsProvider);
           await Future.wait([
             ref.refresh(familyMembersProvider.future),
             ref.refresh(incomingRequestsProvider.future),
+            ref.refresh(outgoingRequestsProvider.future),
           ]);
         },
         child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(), // Needed for RefreshIndicator
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Pending Requests Section ---
+              // --- 1. Incoming Requests (Needs Action) ---
               requestsAsync.when(
                 data: (requests) {
                   if (requests.isEmpty) return const SizedBox.shrink();
@@ -167,7 +151,7 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppColors.warning.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -175,27 +159,23 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.notifications_active, color: AppColors.warning, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              'You have ${requests.length} pending request(s)',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                            const Icon(Icons.notifications_active, color: AppColors.warning),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'You have ${requests.length} incoming request(s)',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text('Pending Requests', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       ...requests.map((req) => Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: AppColors.primary.withOpacity(0.1),
-                            child: const Icon(Icons.person_outline, color: AppColors.primary),
+                            child: Text(req.requester.fullName[0].toUpperCase()),
                           ),
                           title: Text(req.requester.fullName),
                           subtitle: Text('Wants to link as: ${req.label}'),
@@ -203,18 +183,12 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.check_circle, color: AppColors.success, size: 32),
-                                onPressed: () => ref
-                                    .read(familyControllerProvider.notifier)
-                                    .respondToRequest(req.linkId, true),
-                                tooltip: 'Accept',
+                                icon: const Icon(Icons.check_circle, color: AppColors.success),
+                                onPressed: () => ref.read(familyControllerProvider.notifier).respondToRequest(req.linkId, true),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.cancel, color: AppColors.error, size: 32),
-                                onPressed: () => ref
-                                    .read(familyControllerProvider.notifier)
-                                    .respondToRequest(req.linkId, false),
-                                tooltip: 'Reject',
+                                icon: const Icon(Icons.cancel, color: AppColors.error),
+                                onPressed: () => ref.read(familyControllerProvider.notifier).respondToRequest(req.linkId, false),
                               ),
                             ],
                           ),
@@ -225,13 +199,63 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
                   );
                 },
                 loading: () => const LinearProgressIndicator(),
-                error: (e, _) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text('Error loading requests: $e', style: const TextStyle(color: Colors.red)),
-                ),
+                error: (e, _) => const SizedBox.shrink(),
               ),
 
-              // --- Active Members Section ---
+              // --- 2. Outgoing Requests (Pending Status) ---
+              outgoingAsync.when(
+                data: (requests) {
+                  if (requests.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Sent Requests', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 8),
+                      ...requests.map((req) => Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.grey.shade200,
+                            child: const Icon(Icons.hourglass_empty, color: Colors.grey),
+                          ),
+                          title: Text(req.profile.fullName),
+                          subtitle: Text('Invitation sent to ${req.profile.email}'),
+                          trailing: Chip(
+                            label: const Text('Pending'),
+                            backgroundColor: Colors.orange.shade50,
+                            labelStyle: TextStyle(color: Colors.orange.shade800, fontSize: 12),
+                          ),
+                          onLongPress: () {
+                            // Optional: Allow cancelling request on long press
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Cancel Request?'),
+                                content: Text('Do you want to cancel the invitation to ${req.profile.fullName}?'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('No')),
+                                  TextButton(
+                                      onPressed: () {
+                                        ref.read(familyControllerProvider.notifier).cancelRequest(req.linkId);
+                                        Navigator.pop(ctx);
+                                      },
+                                      child: const Text('Yes, Cancel')
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      )),
+                      const Divider(height: 32),
+                    ],
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+
+              // --- 3. Active Members ---
               const Text('Synced Accounts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 4),
               const Text(
@@ -281,10 +305,8 @@ class _FamilyMembersScreenState extends ConsumerState<FamilyMembersScreen> {
                         subtitle: Text(member.label),
                         trailing: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary),
                         onTap: () {
-                          // Navigate to Profile Screen to switch
-                          // Or call switch directly here if desired
                           ref.read(familyControllerProvider.notifier).switchAccount(member.profile.id);
-                          Navigator.pop(context); // Go back to profile
+                          Navigator.pop(context);
                         },
                       );
                     },
