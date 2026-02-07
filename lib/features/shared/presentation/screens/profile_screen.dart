@@ -8,7 +8,6 @@ import '../../../../routing/route_names.dart';
 import '../../../../services/kyc_service.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../widgets/profile_stats_card.dart';
-// FloatingBottomNav import removed
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -17,9 +16,11 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(currentProfileProvider);
     final kycAsync = ref.watch(kycStatusProvider);
+    // Watching the biometric state provider
+    final biometricEnabledAsync = ref.watch(biometricEnabledProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Slate 50
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
           // Background Decor
@@ -39,7 +40,6 @@ class ProfileScreen extends ConsumerWidget {
           // Scrollable Content
           Positioned.fill(
             child: SingleChildScrollView(
-              // Reduced bottom padding from 120 to 40 since Nav Bar is gone
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
               child: SafeArea(
                 bottom: false,
@@ -56,7 +56,6 @@ class ProfileScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Added Back Button for navigation safety since BottomNav is gone
                             const BackButton(color: AppColors.textPrimary),
                             Text(
                               'Profile',
@@ -103,7 +102,6 @@ class ProfileScreen extends ConsumerWidget {
                                   ? const Icon(Icons.person_rounded, size: 48, color: AppColors.textLight)
                                   : null,
                             ),
-                            // Verified Badge
                             if (isVerified)
                               Positioned(
                                 bottom: 0,
@@ -212,15 +210,15 @@ class ProfileScreen extends ConsumerWidget {
 
                         const SizedBox(height: 24),
 
-                        // Information Management Cards
+                        // Stats
                         Row(
                           children: [
                             ProfileStatsCard(
                               title: 'Active\nDevices',
-                              value: '2', // Dynamic in real app
+                              value: '2',
                               subtitle: 'Manage access',
                               icon: Icons.devices_rounded,
-                              accentColor: const Color(0xFF38BDF8), // Sky Blue
+                              accentColor: const Color(0xFF38BDF8),
                               showOnlineIndicator: true,
                               onTap: () => context.push(RouteNames.deviceManagement),
                             ),
@@ -229,7 +227,7 @@ class ProfileScreen extends ConsumerWidget {
                               value: '0',
                               subtitle: 'Dependents',
                               icon: Icons.people_alt_rounded,
-                              accentColor: const Color(0xFFA855F7), // Purple
+                              accentColor: const Color(0xFFA855F7),
                               onTap: () {},
                             ),
                           ],
@@ -237,7 +235,7 @@ class ProfileScreen extends ConsumerWidget {
 
                         const SizedBox(height: 32),
 
-                        // Settings Section
+                        // Settings Header
                         const Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -264,8 +262,22 @@ class ProfileScreen extends ConsumerWidget {
                                 icon: Icons.fingerprint_rounded,
                                 title: 'Biometric Login',
                                 isToggle: true,
-                                toggleValue: true,
-                                onToggle: (val) {},
+                                // Correctly bind to the AsyncValue
+                                toggleValue: biometricEnabledAsync.valueOrNull ?? false,
+                                onToggle: (val) async {
+                                  try {
+                                    await ref.read(authNotifierProvider.notifier).toggleBiometric(val);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Failed to update: ${e.toString()}'),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
                               ),
                               _buildSettingsTile(
                                 icon: Icons.lock_outline_rounded,
@@ -288,7 +300,6 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
           ),
-          // REMOVED: FloatingBottomNav widget
         ],
       ),
     );

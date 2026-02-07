@@ -2,27 +2,31 @@ import 'package:flutter/material.dart';
 import '../../services/biometric_service.dart';
 import '../../services/secure_storage_service.dart';
 
-/// A widget that protects its child with biometric authentication
-/// Use this to wrap any sensitive screen or action
+/// A widget that protects its child with biometric authentication.
+/// [strictMode]: If true, re-authenticates every time the app resumes or the screen is revisited.
 class BiometricGuard extends StatefulWidget {
   final Widget child;
   final String reason;
   final VoidCallback? onAuthenticationFailed;
+  final VoidCallback? onAuthenticated; // New callback
   final bool allowBiometricOnly;
+  final bool strictMode; // Add strict mode
 
   const BiometricGuard({
     super.key,
     required this.child,
     this.reason = 'Please authenticate to continue',
     this.onAuthenticationFailed,
+    this.onAuthenticated,
     this.allowBiometricOnly = true,
+    this.strictMode = false,
   });
 
   @override
   State<BiometricGuard> createState() => _BiometricGuardState();
 }
 
-class _BiometricGuardState extends State<BiometricGuard> {
+class _BiometricGuardState extends State<BiometricGuard> with WidgetsBindingObserver, RouteAware {
   bool _isAuthenticated = false;
   bool _isAuthenticating = false;
   bool _biometricEnabled = false;
@@ -30,46 +34,67 @@ class _BiometricGuardState extends State<BiometricGuard> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // Listen to lifecycle
     _checkBiometricStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Strict Mode: Reset authentication when app goes to background
+    if (widget.strictMode && state == AppLifecycleState.paused) {
+      if (mounted) {
+        setState(() {
+          _isAuthenticated = false;
+        });
+      }
+    }
+
+    // Re-authenticate on resume if needed
+    if (widget.strictMode && state == AppLifecycleState.resumed && !_isAuthenticated) {
+      _checkBiometricStatus();
+    }
   }
 
   Future<void> _checkBiometricStatus() async {
     // Check if biometric is enabled in settings
     final enabled = await SecureStorageService.instance.isBiometricEnabled();
-    setState(() => _biometricEnabled = enabled);
 
-    // If biometric is enabled, require authentication
+    if (mounted) setState(() => _biometricEnabled = enabled);
+
     if (enabled) {
+      // If enabled, we MUST authenticate
       await _authenticate();
     } else {
-      // Biometric not enabled, allow access
-      setState(() => _isAuthenticated = true);
+      // If disabled, we just let them in (BUT this means if toggle is broken, security is broken)
+      // Since we fixed the toggle, this will now correctly reflect your choice.
+      if (mounted) setState(() => _isAuthenticated = true);
+      widget.onAuthenticated?.call();
     }
   }
 
   Future<void> _authenticate() async {
     if (_isAuthenticating) return;
+    if (_isAuthenticated) return;
 
     setState(() => _isAuthenticating = true);
 
     try {
-      // Check if biometric is available
       final isAvailable = await BiometricService.instance.isBiometricAvailable();
-      
+
       if (!isAvailable) {
-        // Biometric not available, allow access or fail based on settings
-        setState(() {
-          _isAuthenticated = !widget.allowBiometricOnly;
-          _isAuthenticating = false;
-        });
-        
-        if (!_isAuthenticated && mounted) {
+        if (mounted) {
+          setState(() => _isAuthenticating = false);
           _showBiometricUnavailableDialog();
         }
         return;
       }
 
-      // Attempt biometric authentication
       final authenticated = await BiometricService.instance.authenticate(
         reason: widget.reason,
         biometricOnly: widget.allowBiometricOnly,
@@ -81,9 +106,10 @@ class _BiometricGuardState extends State<BiometricGuard> {
           _isAuthenticating = false;
         });
 
-        if (!authenticated) {
+        if (authenticated) {
+          widget.onAuthenticated?.call();
+        } else {
           widget.onAuthenticationFailed?.call();
-          Navigator.of(context).pop();
         }
       }
     } on BiometricException catch (e) {
@@ -101,13 +127,13 @@ class _BiometricGuardState extends State<BiometricGuard> {
       builder: (context) => AlertDialog(
         title: const Text('Biometric Unavailable'),
         content: const Text(
-          'Biometric authentication is not available on this device or not properly configured.',
+          'Biometric authentication is not available on this device.',
         ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(); // Go back
             },
             child: const Text('Go Back'),
           ),
@@ -119,6 +145,7 @@ class _BiometricGuardState extends State<BiometricGuard> {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
+      barrierDismissible: false, // Force user to choose
       builder: (context) => AlertDialog(
         title: const Text('Authentication Failed'),
         content: Text(message),
@@ -126,16 +153,16 @@ class _BiometricGuardState extends State<BiometricGuard> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _authenticate();
+              Navigator.of(context).pop(); // Go back
             },
-            child: const Text('Try Again'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
+              _authenticate(); // Retry
             },
-            child: const Text('Cancel'),
+            child: const Text('Try Again'),
           ),
         ],
       ),
@@ -168,27 +195,14 @@ class _BiometricGuardState extends State<BiometricGuard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.lock_outline_rounded,
-                size: 64,
-                color: Colors.grey,
-              ),
+              const Icon(Icons.lock_outline_rounded, size: 64, color: Colors.grey),
               const SizedBox(height: 24),
               const Text(
                 'Authentication Required',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                widget.reason,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                ),
-              ),
+              Text(widget.reason, style: TextStyle(color: Colors.grey.shade600)),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: _authenticate,
@@ -206,7 +220,6 @@ class _BiometricGuardState extends State<BiometricGuard> {
 }
 
 /// Helper function to show biometric authentication dialog before an action
-/// Returns true if authentication succeeded, false otherwise
 Future<bool> showBiometricAuthDialog({
   required BuildContext context,
   String reason = 'Please authenticate to continue',
@@ -214,7 +227,7 @@ Future<bool> showBiometricAuthDialog({
 }) async {
   // Check if biometric is enabled
   final biometricEnabled = await SecureStorageService.instance.isBiometricEnabled();
-  
+
   // If biometric is not enabled, allow the action
   if (!biometricEnabled) {
     return true;
@@ -222,16 +235,15 @@ Future<bool> showBiometricAuthDialog({
 
   // Check if biometric is available
   final isAvailable = await BiometricService.instance.isBiometricAvailable();
-  
+
   if (!isAvailable) {
-    // Show error dialog
     if (context.mounted) {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Biometric Unavailable'),
           content: const Text(
-            'Biometric authentication is not available on this device or not properly configured.',
+            'Biometric authentication is not available on this device.',
           ),
           actions: [
             TextButton(
@@ -254,7 +266,6 @@ Future<bool> showBiometricAuthDialog({
 
     return authenticated;
   } on BiometricException catch (e) {
-    // Show error dialog
     if (context.mounted) {
       await showDialog(
         context: context,

@@ -54,7 +54,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         // Allow KYC and device management screens without auth
         final isKYCRoute = state.matchedLocation == RouteNames.kycVerification;
         final isDeviceRoute = state.matchedLocation == RouteNames.deviceManagement;
-        
+
         if (!isKYCRoute && !isDeviceRoute) {
           return RouteNames.roleSelection;
         }
@@ -280,4 +280,3 @@ String? _rolePrefix(String role) {
       return null;
   }
 }
-
