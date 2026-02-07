@@ -281,6 +281,7 @@ class SupabaseService {
     return (result as List).length;
   }
 
+
   Future<int> getTodaysDispensingCount() async {
     if (currentUserId == null) return 0;
 

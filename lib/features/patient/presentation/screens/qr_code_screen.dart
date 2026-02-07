@@ -1,3 +1,5 @@
+// lib/features/patient/presentation/screens/qr_code_screen.dart
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,27 +23,11 @@ class QrCodeScreen extends ConsumerStatefulWidget {
 class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
   bool _screenshotProtectionEnabled = false;
 
-  @override
-  void dispose() {
-    _disableScreenshotProtection();
-    super.dispose();
-  }
-
   void _onAuthenticated() {
-    _enableScreenshotProtection();
-  }
-
-  void _enableScreenshotProtection() {
     if (Platform.isAndroid) {
       setState(() => _screenshotProtectionEnabled = true);
-      // NOTE: In production, add flutter_windowmanager:
+      // NOTE: In production, uncomment flutter_windowmanager to block screenshots
       // await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
-    }
-  }
-
-  void _disableScreenshotProtection() {
-    if (_screenshotProtectionEnabled && Platform.isAndroid) {
-      // await FlutterWindowManager.clearFlags(FlutterWindowManager.FLAG_SECURE);
     }
   }
 
@@ -50,111 +36,35 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
     final profile = ref.watch(currentProfileProvider);
     final patientData = ref.watch(patientDataProvider);
 
-    // WRAPPED IN BIOMETRIC GUARD WITH STRICT MODE
     return BiometricGuard(
       reason: 'Authenticate to view your Medical QR Code',
-      strictMode: true, // Forces auth every time you come back to this screen
+      strictMode: true,
       onAuthenticated: _onAuthenticated,
-      onAuthenticationFailed: () {
-        Navigator.of(context).pop();
-      },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Emergency QR Code'),
-          actions: [
-            if (_screenshotProtectionEnabled)
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.shield_rounded, color: AppColors.success),
-              ),
-          ],
-        ),
+        appBar: AppBar(title: const Text('Emergency QR Code')),
         body: patientData.when(
           data: (patient) {
-            if (patient == null) {
-              return const Center(child: Text('Patient data not found'));
-            }
+            if (patient == null) return const Center(child: Text('Data not found'));
 
+            // Construct the emergency URL
             final qrUrl = '${EnvConfig.emergencyBaseUrl}/${patient.qrCodeId}';
 
             return SingleChildScrollView(
               padding: AppSpacing.screenPadding,
               child: Column(
                 children: [
-                  const SizedBox(height: 16),
                   if (_screenshotProtectionEnabled)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.success.withOpacity(0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.shield_rounded, color: AppColors.success, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Screenshot protection enabled',
-                              style: TextStyle(color: Colors.green.shade900, fontSize: 13),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          profile.valueOrNull?.fullName ?? 'Patient',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Emergency Medical Card',
-                          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: 220,
-                          height: 220,
-                          child: PrettyQrView.data(
-                            data: qrUrl,
-                            decoration: const PrettyQrDecoration(
-                              shape: PrettyQrSmoothSymbol(color: AppColors.primaryDark),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                    _buildProtectionBanner(),
+                  const SizedBox(height: 20),
+                  _buildQrCard(profile.valueOrNull?.fullName, qrUrl),
                   const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Share.share('My CareSync Emergency QR Code:\n$qrUrl');
-                          },
-                          icon: const Icon(Icons.share_rounded),
-                          label: const Text('Share'),
-                        ),
-                      ),
-                    ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => Share.share('My Emergency Medical QR:\n$qrUrl'),
+                      icon: const Icon(Icons.share_rounded),
+                      label: const Text('Share QR Link'),
+                    ),
                   ),
                 ],
               ),
@@ -163,6 +73,51 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),
         ),
+      ),
+    );
+  }
+
+  Widget _buildQrCard(String? name, String data) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 20)],
+      ),
+      child: Column(
+        children: [
+          Text(name ?? 'Patient', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text('Emergency Medical Card', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: 200,
+            height: 200,
+            child: PrettyQrView.data(
+              data: data,
+              decoration: const PrettyQrDecoration(
+                shape: PrettyQrSmoothSymbol(color: AppColors.primaryDark),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProtectionBanner() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.success.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.shield_rounded, color: AppColors.success, size: 20),
+          SizedBox(width: 12),
+          Text('Screenshot protection enabled', style: TextStyle(color: Colors.green)),
+        ],
       ),
     );
   }
