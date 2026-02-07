@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routing/route_names.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../family/providers/family_provider.dart';
 import '../../../shared/presentation/widgets/dashboard_header.dart';
 
 class PatientDashboardScreen extends ConsumerWidget {
@@ -12,7 +13,8 @@ class PatientDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(currentProfileProvider);
+    // UPDATED: Watch activeContextProfileProvider to show the switched user's name
+    final profile = ref.watch(activeContextProfileProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -25,6 +27,7 @@ class PatientDashboardScreen extends ConsumerWidget {
               // 1. Cleaner Header
               DashboardHeader(
                 greeting: 'Good Morning,',
+                // Handle the AsyncValue properly
                 name: profile.valueOrNull?.fullName.split(' ').first ?? 'Patient',
                 subtitle: 'How are you feeling today?',
                 roleColor: AppColors.patient,

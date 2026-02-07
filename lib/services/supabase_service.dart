@@ -128,38 +128,41 @@ class SupabaseService {
   // PATIENT OPERATIONS
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Get patient data for current user (auto-creates if doesn't exist)
-  Future<Map<String, dynamic>?> getPatientData() async {
-    if (currentUserId == null) return null;
+  /// Get patient data for a specific user or current user
+  /// [userId] - Optional ID to fetch data for (e.g., family member)
+  Future<Map<String, dynamic>?> getPatientData({String? userId}) async {
+    final targetId = userId ?? currentUserId;
+    if (targetId == null) return null;
 
     // Try to get existing patient record
     var response = await client
         .from('patients')
         .select()
-        .eq('user_id', currentUserId!)
+        .eq('user_id', targetId)
         .maybeSingle();
 
-    // If no patient record exists, create one
-    if (response == null) {
+    // If no patient record exists and we are querying for ourselves, create one
+    // We don't auto-create for others to prevent permission errors unless explicitly handling it
+    if (response == null && targetId == currentUserId) {
       try {
         response = await client
             .from('patients')
-            .insert({'user_id': currentUserId})
+            .insert({'user_id': targetId})
             .select()
             .single();
       } catch (e) {
-        // If insert fails (e.g., RLS), try to get again (might have been created)
+        // If insert fails (e.g., RLS), try to get again
         response = await client
             .from('patients')
             .select()
-            .eq('user_id', currentUserId!)
+            .eq('user_id', targetId)
             .maybeSingle();
       }
     }
 
     return response;
   }
-  
+
   /// Ensure patient record exists for current user
   Future<String?> ensurePatientExists() async {
     final data = await getPatientData();
@@ -167,9 +170,12 @@ class SupabaseService {
   }
 
   /// Create or update patient data
-  Future<void> upsertPatientData(Map<String, dynamic> data) async {
+  Future<void> upsertPatientData(Map<String, dynamic> data, {String? userId}) async {
+    final targetId = userId ?? currentUserId;
+    if (targetId == null) return;
+
     await client.from('patients').upsert({
-      'user_id': currentUserId,
+      'user_id': targetId,
       ...data,
       'updated_at': DateTime.now().toIso8601String(),
     });
@@ -205,14 +211,14 @@ class SupabaseService {
     final prescription = await client
         .from('prescriptions')
         .insert({
-          'patient_id': patientId,
-          'doctor_id': patientEntered ? null : currentUserId,
-          'diagnosis': diagnosis,
-          'notes': notes,
-          'is_public': isPublic,
-          'patient_entered': patientEntered,
-          'metadata': metadata,
-        })
+      'patient_id': patientId,
+      'doctor_id': patientEntered ? null : currentUserId,
+      'diagnosis': diagnosis,
+      'notes': notes,
+      'is_public': isPublic,
+      'patient_entered': patientEntered,
+      'metadata': metadata,
+    })
         .select()
         .single();
 
@@ -252,7 +258,6 @@ class SupabaseService {
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Get public emergency data for a patient by QR code ID
-  /// Returns formatted data for emergency display
   Future<Map<String, dynamic>?> getEmergencyData(String qrCodeId) async {
     // Get patient with profile and public conditions
     final patientData = await client
@@ -322,45 +327,44 @@ class SupabaseService {
   /// Get today's prescription count for a doctor
   Future<int> getTodaysPrescriptionCount() async {
     if (currentUserId == null) return 0;
-    
+
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-    
+
     final result = await client
         .from('prescriptions')
         .select('id')
         .eq('doctor_id', currentUserId!)
         .gte('created_at', startOfDay.toIso8601String());
-    
+
     return (result as List).length;
   }
 
   /// Get total prescription count for a doctor
   Future<int> getTotalPrescriptionCount() async {
     if (currentUserId == null) return 0;
-    
+
     final result = await client
         .from('prescriptions')
         .select('id')
         .eq('doctor_id', currentUserId!);
-    
+
     return (result as List).length;
   }
 
   /// Get today's dispensing count for a pharmacist
   Future<int> getTodaysDispensingCount() async {
     if (currentUserId == null) return 0;
-    
+
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-    
+
     final result = await client
         .from('dispensing_records')
         .select('id')
         .eq('pharmacist_id', currentUserId!)
         .gte('dispensed_at', startOfDay.toIso8601String());
-    
+
     return (result as List).length;
   }
 }
-

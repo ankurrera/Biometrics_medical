@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../family/providers/family_provider.dart';
 import '../../models/prescription_input_models.dart';
 import '../../providers/patient_provider.dart';
 import '../widgets/doctor_info_card_widget.dart';
@@ -13,26 +14,6 @@ import '../widgets/prescription_upload_widget.dart';
 import '../../../../services/supabase_service.dart';
 
 /// Comprehensive Add Prescription screen for patient input
-/// 
-/// 🔒 LAYOUT ARCHITECTURE - CRITICAL
-/// This screen uses CustomScrollView with slivers to prevent layout constraint errors.
-/// 
-/// ❌ PREVIOUS ISSUES (FIXED):
-/// - Nested scrollables (ListView inside SingleChildScrollView)
-/// - Unbounded height constraints
-/// - "RenderBox was not laid out" errors
-/// 
-/// ✅ CURRENT SOLUTION:
-/// - ONE scrollable: CustomScrollView
-/// - Static sections: SliverToBoxAdapter / SliverList with SliverChildListDelegate
-/// - Dynamic medications: SliverList with SliverChildBuilderDelegate
-/// - NO nested ListViews, NO Expanded inside scroll views
-/// 
-/// This architecture ensures:
-/// 1. Constraint-safe scrolling with any number of medications
-/// 2. No render overflow errors
-/// 3. Smooth, unified scroll experience
-/// 4. Proper form state management across slivers
 class AddPrescriptionScreen extends ConsumerStatefulWidget {
   const AddPrescriptionScreen({super.key});
 
@@ -156,9 +137,9 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
       _showError('Please enter a diagnosis');
       return false;
     }
-    
+
     // Check for placeholder values in diagnosis
-    if (diagnosis.toLowerCase() == 'mm' || diagnosis.toLowerCase() == 'mmm' || 
+    if (diagnosis.toLowerCase() == 'mm' || diagnosis.toLowerCase() == 'mmm' ||
         diagnosis.toLowerCase() == 'n/a' || diagnosis.toLowerCase() == 'na') {
       _showError('Please enter a valid diagnosis (not a placeholder)');
       return false;
@@ -221,6 +202,7 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // UPDATED: Use patientDataProvider which now respects the active family member context
       final patient = await ref.read(patientDataProvider.future);
       if (patient == null) {
         throw Exception('Patient profile not found');
@@ -253,7 +235,7 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
 
       // Store prescription with metadata
       await SupabaseService.instance.createPrescription(
-        patientId: patient.id,
+        patientId: patient.id, // This will now be the family member's patient ID
         diagnosis: prescriptionInput.diagnosis,
         notes: prescriptionInput.patientNotes,
         isPublic: false,
@@ -290,7 +272,8 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(currentProfileProvider);
+    // UPDATED: Watch activeContextProfileProvider to show family member details in the card
+    final profile = ref.watch(activeContextProfileProvider);
     final patient = ref.watch(patientDataProvider);
 
     return Scaffold(
@@ -367,35 +350,32 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
               ),
 
               // 6️⃣ Medications List - CRITICAL: Using SliverList to avoid nested scroll issues
-              // This prevents "RenderBox was not laid out" errors by using proper sliver architecture
               _medications.isEmpty
                   ? SliverPadding(
-                      padding: AppSpacing.screenPadding,
-                      sliver: SliverToBoxAdapter(
-                        child: _buildEmptyMedicationsState(),
-                      ),
-                    )
+                padding: AppSpacing.screenPadding,
+                sliver: SliverToBoxAdapter(
+                  child: _buildEmptyMedicationsState(),
+                ),
+              )
                   : SliverPadding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppSpacing.screenPadding.left,
-                      ),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            // Each medication card as individual sliver child
-                            // NO Expanded, NO Flexible - just direct widget return
-                            return MedicationCardWidget(
-                              key: ValueKey(_medications[index].id),
-                              index: index,
-                              initialData: _medications[index],
-                              onChanged: (details) => _updateMedication(index, details),
-                              onRemove: () => _removeMedication(index),
-                            );
-                          },
-                          childCount: _medications.length,
-                        ),
-                      ),
-                    ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenPadding.left,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                      return MedicationCardWidget(
+                        key: ValueKey(_medications[index].id),
+                        index: index,
+                        initialData: _medications[index],
+                        onChanged: (details) => _updateMedication(index, details),
+                        onRemove: () => _removeMedication(index),
+                      );
+                    },
+                    childCount: _medications.length,
+                  ),
+                ),
+              ),
 
               // 7️⃣ Safety Flags
               SliverPadding(
@@ -441,7 +421,7 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
           Expanded(
             child: Text(
               'This prescription will be marked as patient-entered input. '
-              'Ensure all information is accurate and matches your doctor-issued prescription.',
+                  'Ensure all information is accurate and matches your doctor-issued prescription.',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontSize: 13,
@@ -488,7 +468,7 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
             ),
           ),
           const Divider(),
-          
+
           // Valid Until
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -501,7 +481,7 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
             ),
           ),
           const Divider(),
-          
+
           // Prescription Type
           const SizedBox(height: AppSpacing.sm),
           const Align(
@@ -538,70 +518,72 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
     return profile.when(
       data: (p) => p != null
           ? Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.patient.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          border: Border.all(
+            color: AppColors.patient.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.patient.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                border: Border.all(
-                  color: AppColors.patient.withOpacity(0.3),
-                ),
+                color: AppColors.patient.withOpacity(0.2),
+                shape: BoxShape.circle,
               ),
-              child: Row(
+              child: const Icon(
+                Icons.person_outline_rounded,
+                color: AppColors.patient,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.patient.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.person_outline_rounded,
-                      color: AppColors.patient,
-                      size: 24,
+                  Text(
+                    p.fullName.isNotEmpty ? p.fullName : 'Patient',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.fullName.isNotEmpty ? p.fullName : 'Patient',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.patient,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'Patient',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.patient,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'Patient',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
               ),
-            )
+            ),
+          ],
+        ),
+      )
           : const SizedBox.shrink(),
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
     );
   }
+
+  // ... (Rest of the widget methods remain unchanged: _buildDiagnosisSection, _buildMedicationsHeader, _buildEmptyMedicationsState, _buildSafetyFlags, _buildSafetyOption, _buildDeclaration, _buildSubmitButton)
 
   Widget _buildDiagnosisSection() {
     return Container(
@@ -627,9 +609,8 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
               if (value == null || value.trim().isEmpty) {
                 return 'Diagnosis is required';
               }
-              // Check for placeholder values
               final lowerValue = value.trim().toLowerCase();
-              if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+              if (lowerValue == 'mm' || lowerValue == 'mmm' ||
                   lowerValue == 'n/a' || lowerValue == 'na' ||
                   lowerValue == 'test' || lowerValue == 'placeholder') {
                 return 'Please enter a valid diagnosis';
@@ -646,10 +627,9 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
             ),
             maxLines: 3,
             validator: (value) {
-              // Optional field, but check for placeholders if provided
               if (value != null && value.trim().isNotEmpty) {
                 final lowerValue = value.trim().toLowerCase();
-                if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                if (lowerValue == 'mm' || lowerValue == 'mmm' ||
                     lowerValue == 'n/a' || lowerValue == 'na' ||
                     lowerValue == 'test' || lowerValue == 'placeholder') {
                   return 'Please remove placeholder text or leave empty';
@@ -667,10 +647,9 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
             ),
             maxLines: 2,
             validator: (value) {
-              // Optional field, but check for placeholders if provided
               if (value != null && value.trim().isNotEmpty) {
                 final lowerValue = value.trim().toLowerCase();
-                if (lowerValue == 'mm' || lowerValue == 'mmm' || 
+                if (lowerValue == 'mm' || lowerValue == 'mmm' ||
                     lowerValue == 'n/a' || lowerValue == 'na' ||
                     lowerValue == 'test' || lowerValue == 'placeholder') {
                   return 'Please remove placeholder text or leave empty';
@@ -684,8 +663,6 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
     );
   }
 
-  /// Builds the medications header with add button
-  /// Sliver-safe: Button uses intrinsic height with finite width
   Widget _buildMedicationsHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -714,8 +691,6 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
     );
   }
 
-  /// Builds empty state when no medications added
-  /// Used as SliverToBoxAdapter child
   Widget _buildEmptyMedicationsState() {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -775,27 +750,24 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // Allergies mentioned
           _buildSafetyOption(
             'Allergies mentioned in prescription?',
             _allergiesMentioned,
-            (value) => setState(() => _allergiesMentioned = value),
+                (value) => setState(() => _allergiesMentioned = value),
           ),
           const Divider(),
 
-          // Pregnancy/Breastfeeding
           _buildSafetyOption(
             'Pregnancy / Breastfeeding considerations?',
             _pregnancyBreastfeeding,
-            (value) => setState(() => _pregnancyBreastfeeding = value),
+                (value) => setState(() => _pregnancyBreastfeeding = value),
           ),
           const Divider(),
 
-          // Chronic condition linked
           _buildSafetyOption(
             'Linked to chronic condition?',
             _chronicConditionLinked,
-            (value) => setState(() => _chronicConditionLinked = value),
+                (value) => setState(() => _chronicConditionLinked = value),
           ),
         ],
       ),
@@ -884,10 +856,10 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
   }
 
   Widget _buildSubmitButton() {
-    final canSubmit = _declarationAccepted && 
-                      _prescriptionUpload.hasFile && 
-                      _medications.isNotEmpty &&
-                      !_isLoading;
+    final canSubmit = _declarationAccepted &&
+        _prescriptionUpload.hasFile &&
+        _medications.isNotEmpty &&
+        !_isLoading;
 
     return SizedBox(
       width: double.infinity,
@@ -901,20 +873,20 @@ class _AddPrescriptionScreenState extends ConsumerState<AddPrescriptionScreen> {
         ),
         child: _isLoading
             ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white,
+          ),
+        )
             : const Text(
-                'Submit Prescription',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          'Submit Prescription',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
