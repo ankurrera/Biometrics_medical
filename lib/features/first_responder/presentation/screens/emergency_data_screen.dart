@@ -350,7 +350,7 @@ class EmergencyDataScreen extends ConsumerWidget {
         ),
         title: Text(medication['medicine'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
-          '${medication['dosage'] ?? ''} • ${medication['frequency'] ?? ''}',
+          [medication['dosage'], medication['frequency']].where((s) => s != null && s.toString().isNotEmpty).join(' • '),
           style: const TextStyle(color: AppColors.textSecondary),
         ),
       ),

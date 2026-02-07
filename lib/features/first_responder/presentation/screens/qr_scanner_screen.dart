@@ -44,7 +44,8 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
         embeddedData = decoded;
       }
     } catch (_) {
-      // Not JSON, try legacy URL format
+      // Not valid JSON – fall through to legacy URL format check
+      assert(() { print('[QR Scanner] QR data is not JSON, trying URL format'); return true; }());
     }
 
     if (embeddedData != null) {
