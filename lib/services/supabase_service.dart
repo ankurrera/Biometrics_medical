@@ -141,9 +141,9 @@ class SupabaseService {
         .eq('user_id', targetId)
         .maybeSingle();
 
-    // If no patient record exists and we are querying for ourselves, create one
-    // We don't auto-create for others to prevent permission errors unless explicitly handling it
-    if (response == null && targetId == currentUserId) {
+    // If no patient record exists, try to create one
+    // FIX: Removed the check (&& targetId == currentUserId) to allow creation for family members
+    if (response == null) {
       try {
         response = await client
             .from('patients')
@@ -151,7 +151,7 @@ class SupabaseService {
             .select()
             .single();
       } catch (e) {
-        // If insert fails (e.g., RLS), try to get again
+        // If insert fails (e.g., RLS permissions or concurrent creation), try fetching again
         response = await client
             .from('patients')
             .select()
@@ -212,6 +212,7 @@ class SupabaseService {
         .from('prescriptions')
         .insert({
       'patient_id': patientId,
+      // FIX: If patientEntered (family upload), doctor_id is null
       'doctor_id': patientEntered ? null : currentUserId,
       'diagnosis': diagnosis,
       'notes': notes,

@@ -20,6 +20,7 @@ final patientDataProvider = FutureProvider<PatientData?>((ref) async {
   final activeId = ref.watch(activeProfileIdProvider);
   if (activeId == null) return null;
 
+  // FIX: This now triggers the updated getPatientData which creates missing records
   final data = await SupabaseService.instance.getPatientData(userId: activeId);
   if (data == null) return null;
   return PatientData.fromJson(data);
@@ -140,7 +141,7 @@ class PatientNotifier extends StateNotifier<AsyncValue<PatientData?>> {
   }
 }
 
-// Updated to use autoDispose so it rebuilds when activeProfileIdProvider changes
+// FIX: autoDispose ensures this notifier rebuilds/resets when activeProfileIdProvider changes
 final patientNotifierProvider =
 StateNotifierProvider.autoDispose<PatientNotifier, AsyncValue<PatientData?>>((ref) {
   final activeId = ref.watch(activeProfileIdProvider);
