@@ -18,7 +18,6 @@ class SupabaseService {
 
   Stream<AuthState> get authStateChanges => auth.onAuthStateChange;
 
-  /// Sign up with email and password
   Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -31,7 +30,6 @@ class SupabaseService {
     );
   }
 
-  /// Sign in with email and password
   Future<AuthResponse> signIn({
     required String email,
     required String password,
@@ -42,7 +40,6 @@ class SupabaseService {
     );
   }
 
-  /// Sign out
   Future<void> signOut() async {
     await auth.signOut();
   }
@@ -51,20 +48,16 @@ class SupabaseService {
   // PROFILE OPERATIONS
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Get current user's profile
   Future<Map<String, dynamic>?> getProfile() async {
     if (currentUserId == null) return null;
-
     final response = await client
         .from('profiles')
         .select()
         .eq('id', currentUserId!)
         .maybeSingle();
-
     return response;
   }
 
-  /// Create or update user profile
   Future<void> upsertProfile(Map<String, dynamic> data) async {
     await client.from('profiles').upsert({
       'id': currentUserId,
@@ -74,58 +67,7 @@ class SupabaseService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // DEVICE OPERATIONS
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /// Register a new device for biometric auth
-  Future<void> registerDevice({
-    required String deviceId,
-    required String deviceName,
-    required String platform,
-  }) async {
-    await client.from('user_devices').insert({
-      'user_id': currentUserId,
-      'device_id': deviceId,
-      'device_name': deviceName,
-      'platform': platform,
-      'enrolled_at': DateTime.now().toIso8601String(),
-      'last_used_at': DateTime.now().toIso8601String(),
-      'is_active': true,
-    });
-  }
-
-  /// Update device last used timestamp
-  Future<void> updateDeviceLastUsed(String deviceId) async {
-    await client
-        .from('user_devices')
-        .update({'last_used_at': DateTime.now().toIso8601String()})
-        .eq('device_id', deviceId)
-        .eq('user_id', currentUserId!);
-  }
-
-  /// Get all devices for current user
-  Future<List<Map<String, dynamic>>> getUserDevices() async {
-    final response = await client
-        .from('user_devices')
-        .select()
-        .eq('user_id', currentUserId!)
-        .eq('is_active', true)
-        .order('last_used_at', ascending: false);
-
-    return List<Map<String, dynamic>>.from(response);
-  }
-
-  /// Deactivate a device
-  Future<void> deactivateDevice(String deviceId) async {
-    await client
-        .from('user_devices')
-        .update({'is_active': false})
-        .eq('device_id', deviceId)
-        .eq('user_id', currentUserId!);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // PATIENT OPERATIONS
+  // PATIENT OPERATIONS (CRITICAL FIX FOR FAMILY)
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Get patient data for a specific user or current user
@@ -134,42 +76,46 @@ class SupabaseService {
     final targetId = userId ?? currentUserId;
     if (targetId == null) return null;
 
-    // Try to get existing patient record
-    var response = await client
-        .from('patients')
-        .select()
-        .eq('user_id', targetId)
-        .maybeSingle();
+    try {
+      // 1. Try to get existing patient record
+      var response = await client
+          .from('patients')
+          .select()
+          .eq('user_id', targetId)
+          .maybeSingle();
 
-    // If no patient record exists, try to create one
-    // FIX: Removed the check (&& targetId == currentUserId) to allow creation for family members
-    if (response == null) {
-      try {
-        response = await client
-            .from('patients')
-            .insert({'user_id': targetId})
-            .select()
-            .single();
-      } catch (e) {
-        // If insert fails (e.g., RLS permissions or concurrent creation), try fetching again
-        response = await client
-            .from('patients')
-            .select()
-            .eq('user_id', targetId)
-            .maybeSingle();
+      // 2. If no patient record exists, try to create one
+      // This is crucial for family members who haven't logged in themselves
+      if (response == null) {
+        try {
+          response = await client
+              .from('patients')
+              .insert({'user_id': targetId})
+              .select()
+              .single();
+        } catch (insertError) {
+          // If insert fails (e.g., RLS permission denied or concurrent create),
+          // try to get again
+          response = await client
+              .from('patients')
+              .select()
+              .eq('user_id', targetId)
+              .maybeSingle();
+        }
       }
-    }
 
-    return response;
+      return response;
+    } catch (e) {
+      // Return null on failure so UI handles it gracefully
+      return null;
+    }
   }
 
-  /// Ensure patient record exists for current user
   Future<String?> ensurePatientExists() async {
     final data = await getPatientData();
     return data?['id'] as String?;
   }
 
-  /// Create or update patient data
   Future<void> upsertPatientData(Map<String, dynamic> data, {String? userId}) async {
     final targetId = userId ?? currentUserId;
     if (targetId == null) return;
@@ -185,7 +131,6 @@ class SupabaseService {
   // PRESCRIPTION OPERATIONS
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Get prescriptions for a patient
   Future<List<Map<String, dynamic>>> getPatientPrescriptions(
       String patientId) async {
     final response = await client
@@ -207,12 +152,12 @@ class SupabaseService {
     required List<Map<String, dynamic>> items,
     Map<String, dynamic>? metadata,
   }) async {
-    // Create prescription
+    // 1. Create prescription header
+    // When patientEntered is true, doctor_id must be null
     final prescription = await client
         .from('prescriptions')
         .insert({
       'patient_id': patientId,
-      // FIX: If patientEntered (family upload), doctor_id is null
       'doctor_id': patientEntered ? null : currentUserId,
       'diagnosis': diagnosis,
       'notes': notes,
@@ -223,7 +168,7 @@ class SupabaseService {
         .select()
         .single();
 
-    // Add prescription items
+    // 2. Add prescription items
     final prescriptionId = prescription['id'];
     for (final item in items) {
       await client.from('prescription_items').insert({
@@ -236,10 +181,9 @@ class SupabaseService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // DISPENSING OPERATIONS
+  // DISPENSING OPERATIONS & OTHERS
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Record a dispensing transaction
   Future<void> recordDispensing({
     required String prescriptionId,
     required String patientId,
@@ -254,13 +198,7 @@ class SupabaseService {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // EMERGENCY ACCESS (PUBLIC DATA)
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /// Get public emergency data for a patient by QR code ID
   Future<Map<String, dynamic>?> getEmergencyData(String qrCodeId) async {
-    // Get patient with profile and public conditions
     final patientData = await client
         .from('patients')
         .select('''
@@ -277,14 +215,12 @@ class SupabaseService {
     final patientId = patientData['id'];
     final profile = patientData['profiles'] as Map<String, dynamic>?;
 
-    // Get public medical conditions
     final conditions = await client
         .from('medical_conditions')
         .select('condition_type, description, severity')
         .eq('patient_id', patientId)
         .eq('is_public', true);
 
-    // Get active public prescription medications
     final prescriptions = await client
         .from('prescriptions')
         .select('prescription_items(medicine_name, dosage, frequency)')
@@ -292,7 +228,6 @@ class SupabaseService {
         .eq('is_public', true)
         .eq('status', 'active');
 
-    // Flatten medications from all prescriptions
     final medications = <Map<String, dynamic>>[];
     for (final rx in prescriptions) {
       final items = rx['prescription_items'] as List? ?? [];
@@ -305,7 +240,6 @@ class SupabaseService {
       }
     }
 
-    // Return formatted data
     return {
       'patient': {
         'full_name': profile?['full_name'],
@@ -321,11 +255,6 @@ class SupabaseService {
     };
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // STATS HELPERS
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /// Get today's prescription count for a doctor
   Future<int> getTodaysPrescriptionCount() async {
     if (currentUserId == null) return 0;
 
@@ -341,7 +270,6 @@ class SupabaseService {
     return (result as List).length;
   }
 
-  /// Get total prescription count for a doctor
   Future<int> getTotalPrescriptionCount() async {
     if (currentUserId == null) return 0;
 
@@ -353,7 +281,6 @@ class SupabaseService {
     return (result as List).length;
   }
 
-  /// Get today's dispensing count for a pharmacist
   Future<int> getTodaysDispensingCount() async {
     if (currentUserId == null) return 0;
 
@@ -367,5 +294,21 @@ class SupabaseService {
         .gte('dispensed_at', startOfDay.toIso8601String());
 
     return (result as List).length;
+  }
+
+  Future<void> registerDevice({
+    required String deviceId,
+    required String deviceName,
+    required String platform,
+  }) async {
+    await client.from('user_devices').insert({
+      'user_id': currentUserId,
+      'device_id': deviceId,
+      'device_name': deviceName,
+      'platform': platform,
+      'enrolled_at': DateTime.now().toIso8601String(),
+      'last_used_at': DateTime.now().toIso8601String(),
+      'is_active': true,
+    });
   }
 }
