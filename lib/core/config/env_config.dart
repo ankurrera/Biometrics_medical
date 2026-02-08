@@ -17,6 +17,11 @@ abstract class EnvConfig {
   // If you need to configure DiDIt credentials, set them as environment variables
   // in your Supabase project: DIDIT_APP_ID and DIDIT_API_KEY
 
+  /// DiDIt KYC callback URL - configurable per environment
+  /// This is where DiDIt will redirect after verification completes
+  static String get diditCallbackUrl =>
+      dotenv.env['DIDIT_CALLBACK_URL'] ?? 'https://caresync.app/verify-callback';
+
   static String _throwMissingEnv(String key) {
     throw Exception('Missing environment variable: $key');
   }

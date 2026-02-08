@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # DiDIt KYC Edge Function Deployment Script
 # This script helps deploy the didit-kyc Edge Function to Supabase
