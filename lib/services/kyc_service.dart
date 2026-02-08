@@ -10,7 +10,12 @@ class KYCService {
 
   final _supabase = Supabase.instance.client;
 
-  /// Creates a Didit verification session.
+  /// Creates a Didit verification session via backend.
+  /// This method now calls the Supabase Edge Function instead of calling DiDIt directly.
+  /// This ensures:
+  /// - API keys are never exposed to the client
+  /// - Backend can validate and log requests
+  /// - Better error handling and security
   Future<String?> createDiditSession() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
@@ -18,30 +23,65 @@ class KYCService {
         throw KYCException('User not authenticated');
       }
 
+      // Get the current session token for authentication
+      final session = _supabase.auth.currentSession;
+      if (session == null) {
+        throw KYCException('No active session');
+      }
+
+      // Call the backend Edge Function to create DiDIt session
+      final functionUrl = '${EnvConfig.supabaseUrl}/functions/v1/didit-kyc';
+      
+      print('[KYC] Creating DiDIt session via backend for user: $userId');
+      
       final requestBody = {
-        'vendor_data': userId,
-        'app_id': EnvConfig.diditAppId,
         'callback_url': 'https://caresync.app/verify-callback',
         'features': ['id_document', 'face_match', 'liveness'],
       };
 
       final response = await http.post(
-        Uri.parse('https://verification.didit.me/v3/sessions/'),
+        Uri.parse(functionUrl),
         headers: {
-          'x-api-key': EnvConfig.diditApiKey,
+          'Authorization': 'Bearer ${session.accessToken}',
           'Content-Type': 'application/json',
         },
         body: jsonEncode(requestBody),
       );
 
-      if (response.statusCode == 201) {
+      print('[KYC] Backend response status: ${response.statusCode}');
+      print('[KYC] Backend response body: ${response.body}');
+
+      if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['url'] as String;
+        if (data['success'] == true && data['url'] != null) {
+          print('[KYC] Session created successfully: ${data['session_id']}');
+          return data['url'] as String;
+        } else {
+          throw KYCException('Invalid response from backend: ${response.body}');
+        }
       } else {
-        final errorData = jsonDecode(response.body);
-        throw KYCException('Didit API Error: ${errorData['message'] ?? response.body}');
+        // Parse error response
+        try {
+          final errorData = jsonDecode(response.body);
+          final errorMsg = errorData['error'] ?? 'Unknown error';
+          final errorDetails = errorData['details'] ?? '';
+          final statusCode = errorData['status_code'] ?? response.statusCode;
+          
+          print('[KYC] Error response: $errorMsg - $errorDetails (Status: $statusCode)');
+          
+          throw KYCException(
+            'Failed to initialize verification: $errorMsg${errorDetails.isNotEmpty ? ' - $errorDetails' : ''}'
+          );
+        } catch (e) {
+          // If error parsing fails, use raw response
+          throw KYCException('Backend error (${response.statusCode}): ${response.body}');
+        }
       }
     } catch (e) {
+      print('[KYC] Exception: $e');
+      if (e is KYCException) {
+        rethrow;
+      }
       throw KYCException('Failed to initialize verification: $e');
     }
   }

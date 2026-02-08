@@ -12,9 +12,10 @@ abstract class EnvConfig {
 
   static String get emergencyBaseUrl => '$supabaseUrl/functions/v1/emergency';
 
-  // Didit Credentials
-  static const String diditAppId = 'c8d23e40-b59d-43d1-9e82-6597b158adea';
-  static const String diditApiKey = 'BzuGk-BYOedLezdMHI6WAFDmrm8bSG3TYO526UuZVms';
+  // DiDIt Credentials are now managed on the backend (Supabase Edge Functions)
+  // and should NOT be exposed to the client app for security reasons.
+  // If you need to configure DiDIt credentials, set them as environment variables
+  // in your Supabase project: DIDIT_APP_ID and DIDIT_API_KEY
 
   static String _throwMissingEnv(String key) {
     throw Exception('Missing environment variable: $key');
