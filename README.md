@@ -6,7 +6,6 @@ A biometric-authenticated medical logging application built with Flutter, Riverp
 
 - **Multi-role Support**: Patient, Doctor, Pharmacist, and First Responder roles
 - **Biometric Authentication**: Face ID / Fingerprint for secure, quick sign-in
-- **KYC Verification**: Secure identity verification with DiDIt integration
 - **Prescription Management**: Create, view, and dispense prescriptions
 - **Emergency QR Code**: Scannable QR for first responders to access critical medical data
 - **Privacy Controls**: Patients can mark data as public or private
@@ -15,10 +14,9 @@ A biometric-authenticated medical logging application built with Flutter, Riverp
 
 - **Flutter 3.7+** - Cross-platform framework
 - **Riverpod** - State management
-- **Supabase** - Backend (Auth, Database, Storage, Edge Functions)
+- **Supabase** - Backend (Auth, Database, Storage)
 - **local_auth** - Biometric authentication
 - **go_router** - Navigation
-- **DiDIt** - KYC/Identity verification
 
 ## Getting Started
 
@@ -50,22 +48,7 @@ abstract class EnvConfig {
 }
 ```
 
-### 4. Configure DiDIt KYC (Optional)
-
-If you want to enable KYC verification:
-
-1. Get your DiDIt credentials from [DiDIt Dashboard](https://didit.me)
-2. Deploy the DiDIt KYC Edge Function:
-   ```bash
-   ./deploy-didit-kyc.sh
-   ```
-3. Set environment variables in Supabase Dashboard (Settings → Edge Functions):
-   - `DIDIT_APP_ID`: Your DiDIt App ID
-   - `DIDIT_API_KEY`: Your DiDIt API Key
-
-For detailed instructions, see [DIDIT_KYC_BACKEND_IMPLEMENTATION.md](DIDIT_KYC_BACKEND_IMPLEMENTATION.md)
-
-### 5. Download Fonts (Optional)
+### 4. Download Fonts (Optional)
 
 Download the Outfit font family and place in `assets/fonts/`:
 - Outfit-Regular.ttf
@@ -75,25 +58,11 @@ Download the Outfit font family and place in `assets/fonts/`:
 
 Or remove the fonts section from `pubspec.yaml` to use system fonts.
 
-### 6. Run the App
+### 5. Run the App
 
 ```bash
 flutter run
 ```
-
-## DiDIt KYC Integration
-
-This project includes a secure backend implementation for DiDIt KYC verification:
-
-- ✅ **Secure**: API keys never exposed to client
-- ✅ **Backend-first**: All DiDIt calls go through Supabase Edge Functions
-- ✅ **Auditable**: Complete logging and audit trail
-- ✅ **Production-ready**: Error handling and retry logic
-
-See documentation:
-- [Implementation Guide](DIDIT_KYC_BACKEND_IMPLEMENTATION.md) - Complete setup and architecture
-- [Code Examples](DIDIT_KYC_EXAMPLES.md) - Usage examples and patterns
-- [Quick Deploy](deploy-didit-kyc.sh) - Automated deployment script
 
 ## Project Structure
 

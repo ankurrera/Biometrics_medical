@@ -12,15 +12,9 @@ abstract class EnvConfig {
 
   static String get emergencyBaseUrl => '$supabaseUrl/functions/v1/emergency';
 
-  // DiDIt Credentials are now managed on the backend (Supabase Edge Functions)
-  // and should NOT be exposed to the client app for security reasons.
-  // If you need to configure DiDIt credentials, set them as environment variables
-  // in your Supabase project: DIDIT_APP_ID and DIDIT_API_KEY
-
-  /// DiDIt KYC callback URL - configurable per environment
-  /// This is where DiDIt will redirect after verification completes
-  static String get diditCallbackUrl =>
-      dotenv.env['DIDIT_CALLBACK_URL'] ?? 'https://caresync.app/verify-callback';
+  // Didit Credentials
+  static const String diditAppId = 'c8d23e40-b59d-43d1-9e82-6597b158adea';
+  static const String diditApiKey = 'BzuGk-BYOedLezdMHI6WAFDmrm8bSG3TYO526UuZVms';
 
   static String _throwMissingEnv(String key) {
     throw Exception('Missing environment variable: $key');
