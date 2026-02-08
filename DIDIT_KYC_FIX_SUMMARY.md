@@ -127,9 +127,11 @@ headers: {
 2. Navigate to **Settings** → **Edge Functions**
 3. Add environment variables:
    ```
-   DIDIT_APP_ID=c8d23e40-b59d-43d1-9e82-6597b158adea
-   DIDIT_API_KEY=BzuGk-BYOedLezdMHI6WAFDmrm8bSG3TYO526UuZVms
+   DIDIT_APP_ID=your_didit_app_id_here
+   DIDIT_API_KEY=your_didit_api_key_here
    ```
+   
+   **Note**: Replace `your_didit_app_id_here` and `your_didit_api_key_here` with your actual DiDIt credentials from the DiDIt Dashboard.
 
 ### Step 2: Deploy Edge Function
 

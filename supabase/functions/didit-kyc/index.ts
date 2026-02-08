@@ -137,9 +137,6 @@ serve(async (req) => {
     );
 
     // Call DiDIt API to create session
-    // According to DiDIt API v3 documentation, sessions endpoint uses GET to retrieve and POST to create
-    // The error "Method POST not allowed" suggests we might be hitting the wrong endpoint
-    // Let's try the correct endpoint format
     const diditResponse = await fetch(
       "https://verification.didit.me/api/v3/sessions",
       {

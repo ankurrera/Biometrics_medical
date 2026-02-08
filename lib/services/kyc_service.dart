@@ -34,6 +34,7 @@ class KYCService {
       
       print('[KYC] Creating DiDIt session via backend for user: $userId');
       
+      // TODO: Consider making callback_url configurable via EnvConfig for different environments
       final requestBody = {
         'callback_url': 'https://caresync.app/verify-callback',
         'features': ['id_document', 'face_match', 'liveness'],

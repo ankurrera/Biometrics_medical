@@ -127,9 +127,11 @@ try {
 3. Add the following environment variables:
 
 ```env
-DIDIT_APP_ID=c8d23e40-b59d-43d1-9e82-6597b158adea
-DIDIT_API_KEY=BzuGk-BYOedLezdMHI6WAFDmrm8bSG3TYO526UuZVms
+DIDIT_APP_ID=your_didit_app_id_here
+DIDIT_API_KEY=your_didit_api_key_here
 ```
+
+**Important**: Replace the placeholder values with your actual DiDIt credentials obtained from the [DiDIt Dashboard](https://didit.me).
 
 ### Step 2: Deploy the Edge Function
 
