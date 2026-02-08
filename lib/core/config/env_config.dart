@@ -1,27 +1,22 @@
+// ankurrera/biometrics_medical/.../lib/core/config/env_config.dart
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Environment configuration for the app.
-/// 
-/// Loads values from .env file. Make sure to call `dotenv.load()` 
-/// in main.dart before using these values.
+
 abstract class EnvConfig {
-  /// Supabase project URL
-  static String get supabaseUrl => 
+  static String get supabaseUrl =>
       dotenv.env['SUPABASE_URL'] ?? _throwMissingEnv('SUPABASE_URL');
 
-  /// Supabase anonymous key (safe to expose in client)
-  static String get supabaseAnonKey => 
+  static String get supabaseAnonKey =>
       dotenv.env['SUPABASE_ANON_KEY'] ?? _throwMissingEnv('SUPABASE_ANON_KEY');
 
-  /// Base URL for emergency QR codes
   static String get emergencyBaseUrl => '$supabaseUrl/functions/v1/emergency';
-  
-  /// Helper to throw meaningful error for missing env vars
+
+  // Didit Credentials
+  static const String diditAppId = 'c8d23e40-b59d-43d1-9e82-6597b158adea';
+  static const String diditApiKey = 'BzuGk-BYOedLezdMHI6WAFDmrm8bSG3TYO526UuZVms';
+
   static String _throwMissingEnv(String key) {
-    throw Exception(
-      'Missing environment variable: $key\n'
-      'Please ensure you have a .env file with all required variables.\n'
-      'See .env.example for reference.',
-    );
+    throw Exception('Missing environment variable: $key');
   }
 }

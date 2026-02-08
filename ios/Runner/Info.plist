@@ -44,12 +44,17 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	
-	<!-- Face ID Permission -->
 	<key>NSFaceIDUsageDescription</key>
-	<string>CareSync uses Face ID for quick and secure sign-in to protect your medical data.</string>
-	
-	<!-- Camera Permission for QR Scanning -->
+	<string>We use Face ID to securely authenticate you and protect your medical data.</string>
+
 	<key>NSCameraUsageDescription</key>
-	<string>CareSync needs camera access to scan patient QR codes for emergency medical information.</string>
+	<string>We need camera access to scan medical QR codes and verify your identity documents.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access for video identity verification.</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to upload medical documents.</string>
+
 </dict>
 </plist>
