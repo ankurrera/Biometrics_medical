@@ -60,11 +60,6 @@ FutureProvider<List<MedicalCondition>>((ref) async {
       .toList();
 });
 
-/// Provider for the emergency QR code data (patient's full emergency profile)
-final emergencyQrDataProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
-  return await SupabaseService.instance.getMyEmergencyProfile();
-});
-
 /// Notifier for managing patient data
 class PatientNotifier extends StateNotifier<AsyncValue<PatientData?>> {
   final String? activeUserId;

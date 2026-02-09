@@ -1,6 +1,5 @@
 // lib/features/first_responder/presentation/screens/qr_scanner_screen.dart
 
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -36,33 +35,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 
     final value = barcode!.rawValue!;
 
-    // Try parsing as embedded JSON emergency data
-    Map<String, dynamic>? embeddedData;
-    try {
-      final decoded = jsonDecode(value);
-      if (decoded is Map<String, dynamic> && decoded['_t'] == 'caresync_emergency') {
-        embeddedData = decoded;
-      }
-    } catch (_) {
-      // Not valid JSON – fall through to legacy URL format check
-      assert(() { print('[QR Scanner] QR data is not JSON, trying URL format'); return true; }());
-    }
-
-    if (embeddedData != null) {
-      setState(() => _isProcessing = true);
-
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EmergencyDataScreen(emergencyData: embeddedData),
-          ),
-        ).then((_) {
-          if (mounted) setState(() => _isProcessing = false);
-        });
-      }
-    } else if (value.contains('/emergency/')) {
-      // Legacy URL-based QR code: extract qrCodeId and fetch from server
+    if (value.contains('/emergency/')) {
       setState(() => _isProcessing = true);
 
       final uri = Uri.parse(value);

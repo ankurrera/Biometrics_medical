@@ -98,136 +98,74 @@
     .blood-label {
       color: #64748b;
       font-size: 12px;
-      font-weight: bold;
-      letter-spacing: 1px;
     }
 
     .blood-value {
-      background: #ef4444;
-      color: white;
+      color: #ef4444;
       font-size: 24px;
       font-weight: bold;
       margin-left: auto;
-      padding: 4px 14px;
-      border-radius: 8px;
     }
 
     .section {
       margin-top: 24px;
     }
 
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .section-header h2 {
+    .section h2 {
       font-size: 18px;
+      margin-bottom: 12px;
       color: #334155;
     }
 
-    .badge-count {
-      font-size: 12px;
-      font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 12px;
-    }
-
-    .allergy-card {
-      background: #fef2f2;
-      border: 2px solid #fca5a5;
+    .condition-card {
+      background: white;
       border-radius: 12px;
       padding: 16px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      margin-bottom: 12px;
+      border-left: 4px solid #94a3b8;
     }
 
-    .allergy-icon {
-      background: #fee2e2;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
+    .condition-card.allergy {
+      border-left-color: #ef4444;
+      background: #fef2f2;
     }
 
-    .allergy-desc {
-      font-weight: 600;
-      font-size: 16px;
-      color: #7f1d1d;
+    .condition-card.chronic {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
     }
 
-    .allergy-severity {
+    .condition-type {
       font-size: 11px;
-      color: #b91c1c;
-      font-weight: bold;
+      font-weight: 600;
+      color: #64748b;
       letter-spacing: 0.5px;
     }
 
-    .severity-badge {
+    .severity {
       font-size: 10px;
-      padding: 3px 10px;
-      border-radius: 8px;
-      font-weight: bold;
-      color: white;
-      margin-left: auto;
-      flex-shrink: 0;
-    }
-
-    .severity-badge.critical { background: #b91c1c; }
-    .severity-badge.severe { background: #ea580c; }
-    .severity-badge.moderate { background: #f59e0b; }
-    .severity-badge.mild { background: #22c55e; }
-
-    .chronic-card {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .chronic-icon {
-      font-size: 20px;
-      color: #b45309;
-    }
-
-    .chronic-desc {
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
       font-weight: 600;
-      font-size: 16px;
+      color: white;
+    }
+
+    .severity.critical { background: #ef4444; }
+    .severity.severe { background: #f97316; }
+    .severity.moderate { background: #f59e0b; }
+    .severity.mild { background: #22c55e; }
+
+    .condition-desc {
+      margin-top: 8px;
+      font-weight: 500;
     }
 
     .medication-card {
       background: white;
       border-radius: 12px;
       padding: 16px;
-      margin-bottom: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .med-icon {
-      background: #f0fdfa;
-      border-radius: 8px;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
+      margin-bottom: 12px;
     }
 
     .med-name {
@@ -238,38 +176,18 @@
     .med-details {
       color: #64748b;
       font-size: 14px;
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
     .contact-card {
       background: white;
-      border-radius: 16px;
+      border-radius: 12px;
       padding: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .contact-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .contact-avatar {
-      background: #f0fdf4;
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
     }
 
     .contact-name {
       font-weight: 600;
-      font-size: 17px;
+      font-size: 18px;
     }
 
     .contact-relation {
@@ -283,14 +201,11 @@
       color: white;
       text-align: center;
       padding: 14px;
-      border-radius: 12px;
+      border-radius: 10px;
+      margin-top: 12px;
       text-decoration: none;
       font-weight: 600;
       font-size: 16px;
-    }
-
-    .call-button:active {
-      background: #16a34a;
     }
 
     .empty {
@@ -298,9 +213,8 @@
       font-style: italic;
       padding: 16px;
       text-align: center;
-      background: #f8fafc;
+      background: white;
       border-radius: 12px;
-      border: 1px solid #e2e8f0;
     }
 
     footer {
@@ -376,56 +290,25 @@
         </div>
       </section>
 
-      <!-- Allergies Section -->
       <section class="section">
-        <div class="section-header">
-          <span>⚠️</span>
-          <h2>Allergies</h2>
-          <span id="allergy-badge" class="badge-count hidden" style="background:#fee2e2;color:#b91c1c;">0</span>
-        </div>
-        <div id="allergies-list">
-          <p class="empty">No known allergies</p>
+        <h2>⚠️ Medical Conditions & Allergies</h2>
+        <div id="conditions-list" class="conditions-list">
+          <p class="empty">No conditions listed</p>
         </div>
       </section>
 
-      <!-- Chronic Diseases Section -->
       <section class="section">
-        <div class="section-header">
-          <span>🫀</span>
-          <h2>Chronic Diseases</h2>
-          <span id="chronic-badge" class="badge-count hidden" style="background:#fef3c7;color:#b45309;">0</span>
-        </div>
-        <div id="chronic-list">
-          <p class="empty">No chronic diseases listed</p>
-        </div>
-      </section>
-
-      <!-- Medications Section -->
-      <section class="section">
-        <div class="section-header">
-          <span>💊</span>
-          <h2>Current Medications</h2>
-          <span id="meds-badge" class="badge-count hidden" style="background:#f0fdfa;color:#0d9488;">0</span>
-        </div>
-        <div id="medications-list">
+        <h2>💊 Current Medications</h2>
+        <div id="medications-list" class="medications-list">
           <p class="empty">No current medications</p>
         </div>
       </section>
 
-      <!-- Emergency Contacts Section -->
       <section id="emergency-contact-section" class="section hidden">
-        <div class="section-header">
-          <span>📞</span>
-          <h2>Emergency Contacts</h2>
-        </div>
+        <h2>📞 Emergency Contact</h2>
         <div class="contact-card">
-          <div class="contact-info">
-            <div class="contact-avatar">👤</div>
-            <div>
-              <div id="contact-name" class="contact-name">-</div>
-              <div id="contact-relation" class="contact-relation"></div>
-            </div>
-          </div>
+          <div id="contact-name" class="contact-name">-</div>
+          <div id="contact-relation" class="contact-relation"></div>
           <a id="call-button" href="tel:" class="call-button">📱 Call</a>
         </div>
       </section>
@@ -442,52 +325,14 @@
     const SUPABASE_URL = 'https://lfgolvfcuslutspvutmz.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZ29sdmZjdXNsdXRzcHZ1dG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzMjYwNDcsImV4cCI6MjA4MTkwMjA0N30.YERtNCWUR2rB5Nch_d5hqhv9Sqc0s-NrOHf52i8c-aE';
 
-    // Check for embedded data in URL hash first
-    function tryEmbeddedData() {
-      const hash = window.location.hash;
-      if (hash && hash.length > 1) {
-        try {
-          const jsonStr = decodeURIComponent(hash.substring(1));
-          const data = JSON.parse(jsonStr);
-          if (data && data._t === 'caresync_emergency') {
-            return data;
-          }
-        } catch (e) {
-          console.error('Failed to parse embedded hash data:', e);
-        }
-      }
-      // Also check query param
-      const urlParams = new URLSearchParams(window.location.search);
-      const dataParam = urlParams.get('data');
-      if (dataParam) {
-        try {
-          const data = JSON.parse(atob(dataParam));
-          if (data && data._t === 'caresync_emergency') {
-            return data;
-          }
-        } catch (e) {
-          console.error('Failed to parse data parameter:', e);
-        }
-      }
-      return null;
-    }
-
     // Get QR code ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const qrCodeId = urlParams.get('id') || window.location.pathname.split('/').pop();
 
     async function loadEmergencyData() {
       const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
       const contentEl = document.getElementById('content');
-
-      // First, try embedded data (no network needed)
-      const embedded = tryEmbeddedData();
-      if (embedded) {
-        displayEmbeddedData(embedded);
-        loadingEl.classList.add('hidden');
-        contentEl.classList.remove('hidden');
-        return;
-      }
 
       if (!qrCodeId || qrCodeId === 'emergency.html') {
         showError('Invalid QR code');
@@ -514,7 +359,7 @@
         }
 
         // Populate data
-        displayServerData(data);
+        displayData(data);
 
         // Show content
         loadingEl.classList.add('hidden');
@@ -532,146 +377,41 @@
       document.getElementById('error-message').textContent = message;
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function displayEmbeddedData(data) {
-      document.getElementById('patient-name').textContent = data.name || 'Unknown';
-
-      if (data.blood_type) {
-        document.getElementById('blood-type').textContent = data.blood_type;
-        document.getElementById('blood-type-container').classList.remove('hidden');
-      }
-
-      // Allergies
-      const allergies = data.allergies || [];
-      if (allergies.length > 0) {
-        const badge = document.getElementById('allergy-badge');
-        badge.textContent = allergies.length;
-        badge.classList.remove('hidden');
-        document.getElementById('allergies-list').innerHTML = allergies.map(a => {
-          const sev = a.severity ? a.severity.toLowerCase() : '';
-          return `
-            <div class="allergy-card">
-              <div class="allergy-icon">⚠️</div>
-              <div>
-                <div class="allergy-desc">${escapeHtml(a.description || 'Unknown')}</div>
-                ${sev ? `<div class="allergy-severity">${escapeHtml(sev.toUpperCase())}</div>` : ''}
-              </div>
-              ${sev ? `<span class="severity-badge ${escapeHtml(sev)}">${escapeHtml(sev.toUpperCase())}</span>` : ''}
-            </div>`;
-        }).join('');
-      }
-
-      // Chronic Diseases
-      const chronic = data.chronic_diseases || [];
-      if (chronic.length > 0) {
-        const badge = document.getElementById('chronic-badge');
-        badge.textContent = chronic.length;
-        badge.classList.remove('hidden');
-        document.getElementById('chronic-list').innerHTML = chronic.map(c => `
-          <div class="chronic-card">
-            <span class="chronic-icon">🫀</span>
-            <div class="chronic-desc">${escapeHtml(c.description || 'Unknown')}</div>
-          </div>
-        `).join('');
-      }
-
-      // Medications
-      const meds = data.medications || [];
-      if (meds.length > 0) {
-        const badge = document.getElementById('meds-badge');
-        badge.textContent = meds.length;
-        badge.classList.remove('hidden');
-        document.getElementById('medications-list').innerHTML = meds.map(m => `
-          <div class="medication-card">
-            <div class="med-icon">💊</div>
-            <div>
-              <div class="med-name">${escapeHtml(m.medicine || 'Unknown')}</div>
-              <div class="med-details">${[m.dosage, m.frequency].filter(Boolean).map(s => escapeHtml(s)).join(' • ')}</div>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      // Emergency Contact
-      const contact = data.emergency_contact;
-      if (contact && contact.name) {
-        document.getElementById('contact-name').textContent = contact.name;
-        if (contact.relationship) {
-          document.getElementById('contact-relation').textContent = contact.relationship;
-        }
-        if (contact.phone) {
-          const callBtn = document.getElementById('call-button');
-          callBtn.href = `tel:${contact.phone}`;
-          callBtn.textContent = `📱 Call ${contact.phone}`;
-        }
-        document.getElementById('emergency-contact-section').classList.remove('hidden');
-      }
-    }
-
-    function displayServerData(data) {
+    function displayData(data) {
       const patient = data.patient || {};
       const conditions = data.conditions || [];
       const medications = data.medications || [];
 
+      // Patient name
       document.getElementById('patient-name').textContent = patient.full_name || 'Unknown';
 
+      // Blood type
       if (patient.blood_type) {
         document.getElementById('blood-type').textContent = patient.blood_type;
         document.getElementById('blood-type-container').classList.remove('hidden');
       }
 
-      // Separate allergies from chronic conditions
-      const allergies = conditions.filter(c => c.type === 'allergy');
-      const chronic = conditions.filter(c => c.type !== 'allergy');
-
-      if (allergies.length > 0) {
-        const badge = document.getElementById('allergy-badge');
-        badge.textContent = allergies.length;
-        badge.classList.remove('hidden');
-        document.getElementById('allergies-list').innerHTML = allergies.map(a => {
-          const sev = a.severity ? a.severity.toLowerCase() : '';
-          return `
-            <div class="allergy-card">
-              <div class="allergy-icon">⚠️</div>
-              <div>
-                <div class="allergy-desc">${escapeHtml(a.description || 'Unknown')}</div>
-                ${sev ? `<div class="allergy-severity">${escapeHtml(sev.toUpperCase())}</div>` : ''}
-              </div>
-              ${sev ? `<span class="severity-badge ${escapeHtml(sev)}">${escapeHtml(sev.toUpperCase())}</span>` : ''}
-            </div>`;
-        }).join('');
-      }
-
-      if (chronic.length > 0) {
-        const badge = document.getElementById('chronic-badge');
-        badge.textContent = chronic.length;
-        badge.classList.remove('hidden');
-        document.getElementById('chronic-list').innerHTML = chronic.map(c => `
-          <div class="chronic-card">
-            <span class="chronic-icon">🫀</span>
-            <div class="chronic-desc">${escapeHtml(c.description || 'Unknown')}</div>
+      // Conditions
+      if (conditions.length > 0) {
+        const conditionsHtml = conditions.map(c => `
+          <div class="condition-card ${c.type || ''}">
+            <span class="condition-type">${(c.type || 'OTHER').toUpperCase()}</span>
+            ${c.severity ? `<span class="severity ${c.severity}">${c.severity}</span>` : ''}
+            <p class="condition-desc">${c.description}</p>
           </div>
         `).join('');
+        document.getElementById('conditions-list').innerHTML = conditionsHtml;
       }
 
+      // Medications
       if (medications.length > 0) {
-        const badge = document.getElementById('meds-badge');
-        badge.textContent = medications.length;
-        badge.classList.remove('hidden');
-        document.getElementById('medications-list').innerHTML = medications.map(m => `
+        const medsHtml = medications.map(m => `
           <div class="medication-card">
-            <div class="med-icon">💊</div>
-            <div>
-              <div class="med-name">${escapeHtml(m.medicine || 'Unknown')}</div>
-              <div class="med-details">${[m.dosage, m.frequency].filter(Boolean).map(s => escapeHtml(s)).join(' • ')}</div>
-            </div>
+            <div class="med-name">${m.medicine}</div>
+            <div class="med-details">${m.dosage} • ${m.frequency}</div>
           </div>
         `).join('');
+        document.getElementById('medications-list').innerHTML = medsHtml;
       }
 
       // Emergency contact
@@ -681,11 +421,8 @@
         if (contact.relationship) {
           document.getElementById('contact-relation').textContent = contact.relationship;
         }
-        if (contact.phone) {
-          const callBtn = document.getElementById('call-button');
-          callBtn.href = `tel:${contact.phone}`;
-          callBtn.textContent = `📱 Call ${contact.phone}`;
-        }
+        document.getElementById('call-button').href = `tel:${contact.phone}`;
+        document.getElementById('call-button').textContent = `📱 Call ${contact.phone}`;
         document.getElementById('emergency-contact-section').classList.remove('hidden');
       }
     }
@@ -695,3 +432,4 @@
   </script>
 </body>
 </html>
+

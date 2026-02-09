@@ -1,12 +1,12 @@
 // lib/features/patient/presentation/screens/qr_code_screen.dart
 
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/config/env_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/biometric_guard.dart';
@@ -31,24 +31,10 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
     }
   }
 
-  /// Build a compact JSON payload from the emergency profile data.
-  String _buildQrPayload(Map<String, dynamic> data) {
-    final payload = {
-      '_t': 'caresync_emergency',
-      'name': data['name'],
-      'blood_type': data['blood_type'],
-      'allergies': data['allergies'],
-      'chronic_diseases': data['chronic_diseases'],
-      'medications': data['medications'],
-      'emergency_contact': data['emergency_contact'],
-    };
-    return jsonEncode(payload);
-  }
-
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(currentProfileProvider);
-    final emergencyData = ref.watch(emergencyQrDataProvider);
+    final patientData = ref.watch(patientDataProvider);
 
     return BiometricGuard(
       reason: 'Authenticate to view your Medical QR Code',
@@ -56,11 +42,12 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
       onAuthenticated: _onAuthenticated,
       child: Scaffold(
         appBar: AppBar(title: const Text('Emergency QR Code')),
-        body: emergencyData.when(
-          data: (data) {
-            if (data == null) return const Center(child: Text('No medical data found. Please complete your profile.'));
+        body: patientData.when(
+          data: (patient) {
+            if (patient == null) return const Center(child: Text('Data not found'));
 
-            final qrData = _buildQrPayload(data);
+            // Construct the emergency URL
+            final qrUrl = '${EnvConfig.emergencyBaseUrl}/${patient.qrCodeId}';
 
             return SingleChildScrollView(
               padding: AppSpacing.screenPadding,
@@ -69,19 +56,14 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                   if (_screenshotProtectionEnabled)
                     _buildProtectionBanner(),
                   const SizedBox(height: 20),
-                  _buildQrCard(profile.valueOrNull?.fullName, qrData),
-                  const SizedBox(height: 16),
-                  _buildInfoBanner(),
+                  _buildQrCard(profile.valueOrNull?.fullName, qrUrl),
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () => Share.share(
-                        'My CareSync Emergency Medical QR data is encoded in the QR code. '
-                        'Scan with the CareSync app to view details.',
-                      ),
+                      onPressed: () => Share.share('My Emergency Medical QR:\n$qrUrl'),
                       icon: const Icon(Icons.share_rounded),
-                      label: const Text('Share QR Info'),
+                      label: const Text('Share QR Link'),
                     ),
                   ),
                 ],
@@ -116,29 +98,6 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
               decoration: const PrettyQrDecoration(
                 shape: PrettyQrSmoothSymbol(color: AppColors.primaryDark),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoBanner() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.infoLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.info_outline, color: AppColors.info, size: 20),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'This QR contains your emergency medical data. '
-              'First responders can scan it to see your blood group, allergies, medications, and emergency contacts.',
-              style: TextStyle(color: AppColors.info, fontSize: 12),
             ),
           ),
         ],
