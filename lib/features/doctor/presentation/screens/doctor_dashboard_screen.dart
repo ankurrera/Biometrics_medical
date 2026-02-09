@@ -8,7 +8,8 @@ import '../../../../routing/route_names.dart';
 import '../../../../services/supabase_service.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../shared/presentation/widgets/dashboard_header.dart';
-import '../../../shared/presentation/widgets/quick_action_card.dart';
+// Note: We are building custom modern cards here to match the reference image exactly,
+// effectively replacing the generic QuickActionCard for this specific screen.
 
 final doctorTodayStatsProvider = FutureProvider<int>((ref) async {
   return await SupabaseService.instance.getTodaysPrescriptionCount();
@@ -28,6 +29,8 @@ class DoctorDashboardScreen extends ConsumerWidget {
     final totalStats = ref.watch(doctorTotalStatsProvider);
 
     return Scaffold(
+      // The reference uses a very light/clean background.
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -36,149 +39,191 @@ class DoctorDashboardScreen extends ConsumerWidget {
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: AppSpacing.screenPadding,
+            padding: const EdgeInsets.symmetric(vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                DashboardHeader(
-                  greeting: 'Good day,',
-                  name: 'Dr. ${profile.valueOrNull?.fullName.isNotEmpty == true ? profile.valueOrNull!.fullName : 'Doctor'}',
-                  subtitle: 'Manage patients & prescriptions',
-                  roleColor: AppColors.doctor,
+                // 1. Header Section
+                Padding(
+                  padding: AppSpacing.screenPadding,
+                  child: DashboardHeader(
+                    greeting: 'Welcome back,',
+                    name: 'Dr. ${profile.valueOrNull?.fullName.split(' ').first ?? 'Williams'}',
+                    subtitle: 'Manage your patients',
+                    roleColor: AppColors.doctor,
+                  ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-                // Stats Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatCard(
+                // 2. Quick Access Section (Solid Blocks like Reference)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: const Text(
+                    'Quick Access',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      _buildModernQuickAction(
                         context,
-                        'Today\'s Rx',
-                        todayStats.valueOrNull?.toString() ?? '0',
-                        Icons.today_rounded,
-                        AppColors.doctor,
+                        title: 'Find\nPatient',
+                        icon: Icons.person_search_rounded,
+                        color: AppColors.primary,
+                        onTap: () => context.push(RouteNames.doctorPatientLookup),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildStatCard(
+                      const SizedBox(width: 16),
+                      _buildModernQuickAction(
                         context,
-                        'Total Rx',
-                        totalStats.valueOrNull?.toString() ?? '0',
-                        Icons.description_outlined,
-                        AppColors.pharmacist,
+                        title: 'New\nPrescription',
+                        icon: Icons.add_circle_outline_rounded,
+                        color: const Color(0xFF547DE5), // Reference Image Blue
+                        onTap: () => context.push(RouteNames.doctorPatientLookup),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-              // Quick Actions
-              const Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: QuickActionCard(
-                      icon: Icons.person_search_rounded,
-                      title: 'Find Patient',
-                      subtitle: 'Search or scan QR',
-                      color: AppColors.doctor,
-                      onTap: () {
-                        context.push(RouteNames.doctorPatientLookup);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: QuickActionCard(
-                      icon: Icons.add_circle_outline_rounded,
-                      title: 'New Prescription',
-                      subtitle: 'Create prescription',
-                      color: AppColors.primary,
-                      onTap: () {
-                        context.push(RouteNames.doctorPatientLookup);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: QuickActionCard(
-                      icon: Icons.history_rounded,
-                      title: 'History',
-                      subtitle: 'Past prescriptions',
-                      color: AppColors.info,
-                      onTap: () {
-                        context.push(RouteNames.doctorHistory);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: QuickActionCard(
-                      icon: Icons.qr_code_scanner_rounded,
-                      title: 'Scan QR',
-                      subtitle: 'Quick patient access',
-                      color: AppColors.accent,
-                      onTap: () {
-                        context.push(RouteNames.doctorPatientLookup);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Recent Activity
-              const Text(
-                'Recent Activity',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.history_rounded,
-                      size: 48,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No recent activity',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      const SizedBox(width: 16),
+                      _buildModernQuickAction(
+                        context,
+                        title: 'Scan\nQR Code',
+                        icon: Icons.qr_code_scanner_rounded,
+                        color: AppColors.accent,
+                        onTap: () => context.push(RouteNames.doctorPatientLookup),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 16),
+                      _buildModernQuickAction(
+                        context,
+                        title: 'History\nLog',
+                        icon: Icons.history_rounded,
+                        color: AppColors.secondary,
+                        onTap: () => context.push(RouteNames.doctorHistory),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 32),
+
+                // 3. Overview / Stats (Clean White Cards like Reference Screen 2)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: const Text(
+                    'Overview',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildModernStatCard(
+                          context,
+                          label: 'Today\'s Rx',
+                          value: todayStats.valueOrNull?.toString() ?? '0',
+                          icon: Icons.today_rounded,
+                          iconColor: AppColors.doctor,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildModernStatCard(
+                          context,
+                          label: 'Total Rx',
+                          value: totalStats.valueOrNull?.toString() ?? '0',
+                          icon: Icons.description_outlined,
+                          iconColor: AppColors.pharmacist,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // 4. Recent Activity (Styled List Container)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Recent Activity',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {}, // Navigate to full history if needed
+                        child: const Text('See all'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Empty State adapted to look like a placeholder for the list
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundLight,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.history_rounded,
+                          size: 32,
+                          color: AppColors.textLight.withOpacity(0.5),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'No recent prescriptions',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Prescriptions you create will appear here',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Bottom padding for scroll
+                const SizedBox(height: 80),
               ],
             ),
           ),
@@ -187,40 +232,121 @@ class DoctorDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(
-    BuildContext context,
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
+  // Matches the "Requests" / "Patients" solid buttons in reference
+  Widget _buildModernQuickAction(
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+        required Color color,
+        required VoidCallback onTap,
+      }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Ink(
+          width: 140, // Fixed width for horizontal scrolling cards
+          height: 140, // Square aspect ratio like reference
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  // Matches the clean white stats cards in reference (Screen 2)
+  Widget _buildModernStatCard(
+      BuildContext context, {
+        required String label,
+        required String value,
+        required IconData icon,
+        required Color iconColor,
+      }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Text(
             value,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: isDark ? Colors.white : AppColors.textPrimary,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -228,4 +354,3 @@ class DoctorDashboardScreen extends ConsumerWidget {
     );
   }
 }
-
