@@ -131,6 +131,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
 
       await _createRoleRecord(role);
       await _storage.setUserId(response.user!.id);
+
+      // FIX: Invalidate profile provider to fetch the newly added fields immediately
+      ref.invalidate(currentProfileProvider);
+
       state = AsyncValue.data(response.user);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -157,6 +161,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
 
       // Refresh biometric state on login
       ref.invalidate(biometricEnabledProvider);
+      // Refresh profile to ensure we have latest data
+      ref.invalidate(currentProfileProvider);
 
       final isDeviceRegistered = await _deviceService.isDeviceRegistered();
       if (!isDeviceRegistered) {

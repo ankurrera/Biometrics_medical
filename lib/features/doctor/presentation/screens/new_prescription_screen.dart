@@ -36,13 +36,14 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   final _diagnosisController = TextEditingController();
   final _notesController = TextEditingController();
 
-  // Doctor Details Controllers (New)
+  // Doctor Details Controllers
   final _hospitalController = TextEditingController();
   final _regNumberController = TextEditingController();
   final _specializationController = TextEditingController();
 
   bool _isPublic = false;
   bool _isLoading = false;
+  bool _initialDataLoaded = false; // Flag to prevent overwriting if we rebuild
 
   // Metadata Fields
   DateTime _prescriptionDate = DateTime.now();
@@ -155,7 +156,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
     try {
       // 1. Prepare Doctor Details Metadata
-      // This ensures the Patient side sees Name, Clinic, etc. immediately
       final doctorDetails = {
         'doctor_name': doctorProfile?.fullName ?? 'Dr. Unknown',
         'hospital_clinic_name': _hospitalController.text.trim().isNotEmpty
@@ -229,6 +229,21 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     // Watch current user profile to get Doctor Name
     final currentUserAsync = ref.watch(currentProfileProvider);
 
+    // Autofill form fields once when data is available
+    if (!_initialDataLoaded && currentUserAsync.valueOrNull != null) {
+      final profile = currentUserAsync.valueOrNull!;
+      if (_hospitalController.text.isEmpty) {
+        _hospitalController.text = profile.hospitalName ?? '';
+      }
+      if (_specializationController.text.isEmpty) {
+        _specializationController.text = profile.specialization ?? '';
+      }
+      if (_regNumberController.text.isEmpty) {
+        _regNumberController.text = profile.medicalRegNumber ?? '';
+      }
+      _initialDataLoaded = true;
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: currentUserAsync.when(
@@ -290,7 +305,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 1. Issuer Details (Added for your request)
+                          // 1. Issuer Details (Locked)
                           _buildExpansionSection(
                             title: 'Issuer Details (You)',
                             icon: Icons.badge_rounded,
@@ -446,14 +461,16 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Clinic Name - Editable
+        // Hospital/Clinic - LOCKED
         TextFormField(
           controller: _hospitalController,
+          readOnly: true,
           decoration: const InputDecoration(
             labelText: 'Hospital / Clinic Name',
-            hintText: 'e.g. City General Hospital',
             prefixIcon: Icon(Icons.local_hospital_outlined),
             border: OutlineInputBorder(),
+            filled: true,
+            fillColor: Color(0xFFF5F5F5),
           ),
         ),
         const SizedBox(height: 12),
@@ -463,11 +480,13 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             Expanded(
               child: TextFormField(
                 controller: _specializationController,
+                readOnly: true,
                 decoration: const InputDecoration(
                   labelText: 'Specialization',
-                  hintText: 'e.g. Cardiologist',
                   prefixIcon: Icon(Icons.school_outlined),
                   border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Color(0xFFF5F5F5),
                 ),
               ),
             ),
@@ -475,15 +494,32 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             Expanded(
               child: TextFormField(
                 controller: _regNumberController,
+                readOnly: true,
                 decoration: const InputDecoration(
                   labelText: 'Medical Reg. No',
-                  hintText: 'Optional',
                   prefixIcon: Icon(Icons.numbers_rounded),
                   border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Color(0xFFF5F5F5),
                 ),
               ),
             ),
           ],
+        ),
+
+        // Helper text
+        const Padding(
+          padding: EdgeInsets.only(top: 12.0, left: 4),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey),
+              SizedBox(width: 6),
+              Text(
+                'To change these details, edit your Profile.',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ),
         ),
       ],
     );
