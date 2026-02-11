@@ -13,7 +13,6 @@ import '../../../shared/models/user_profile.dart';
 import '../../../auth/providers/auth_provider.dart';
 
 // Imports for parity
-import '../../../patient/presentation/widgets/prescription_upload_widget.dart';
 import '../../../patient/models/prescription_input_models.dart';
 
 class NewPrescriptionScreen extends ConsumerStatefulWidget {
@@ -36,22 +35,13 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   final _diagnosisController = TextEditingController();
   final _notesController = TextEditingController();
 
-  // Doctor Details Controllers
-  final _hospitalController = TextEditingController();
-  final _regNumberController = TextEditingController();
-  final _specializationController = TextEditingController();
-
   bool _isPublic = false;
   bool _isLoading = false;
-  bool _initialDataLoaded = false; // Flag to prevent overwriting if we rebuild
 
   // Metadata Fields
   DateTime _prescriptionDate = DateTime.now();
   DateTime _validUntil = DateTime.now().add(const Duration(days: 30));
   PrescriptionType _prescriptionType = PrescriptionType.newPrescription;
-
-  // Upload Field
-  PrescriptionUpload _prescriptionUpload = const PrescriptionUpload();
 
   // Safety Flags
   bool? _allergiesMentioned;
@@ -74,9 +64,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   void dispose() {
     _diagnosisController.dispose();
     _notesController.dispose();
-    _hospitalController.dispose();
-    _regNumberController.dispose();
-    _specializationController.dispose();
     for (final med in _medications) {
       med.dispose();
     }
@@ -132,10 +119,10 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   Future<void> _submit(UserProfile? doctorProfile) async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_medications.isEmpty && !_prescriptionUpload.hasFile) {
+    if (_medications.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please add medications OR upload a prescription file'),
+          content: Text('Please add at least one medication'),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
         ),
@@ -158,11 +145,9 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
       // 1. Prepare Doctor Details Metadata
       final doctorDetails = {
         'doctor_name': doctorProfile?.fullName ?? 'Dr. Unknown',
-        'hospital_clinic_name': _hospitalController.text.trim().isNotEmpty
-            ? _hospitalController.text.trim()
-            : 'Private Practice',
-        'specialization': _specializationController.text.trim(),
-        'medical_registration_number': _regNumberController.text.trim(),
+        'hospital_clinic_name': doctorProfile?.hospitalName ?? 'Private Practice',
+        'specialization': doctorProfile?.specialization ?? '',
+        'medical_registration_number': doctorProfile?.medicalRegNumber ?? '',
         'signature_uploaded': true, // Digital signature verified by biometric
       };
 
@@ -173,15 +158,12 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         'prescription_date': _prescriptionDate.toIso8601String(),
         'valid_until': _validUntil.toIso8601String(),
         'type': _prescriptionType.name,
-        // Crucial: Embed doctor details here for the Patient View
         'doctor_details': doctorDetails,
         'safety_flags': {
           'allergies_mentioned': _allergiesMentioned,
           'pregnancy_breastfeeding': _pregnancyBreastfeeding,
           'chronic_condition_linked': _chronicConditionLinked,
         },
-        if (_prescriptionUpload.hasFile)
-          'upload': _prescriptionUpload.toJson(),
       };
 
       await SupabaseService.instance.createPrescription(
@@ -226,23 +208,8 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch current user profile to get Doctor Name
+    // Watch current user profile to get Doctor data for background submission
     final currentUserAsync = ref.watch(currentProfileProvider);
-
-    // Autofill form fields once when data is available
-    if (!_initialDataLoaded && currentUserAsync.valueOrNull != null) {
-      final profile = currentUserAsync.valueOrNull!;
-      if (_hospitalController.text.isEmpty) {
-        _hospitalController.text = profile.hospitalName ?? '';
-      }
-      if (_specializationController.text.isEmpty) {
-        _specializationController.text = profile.specialization ?? '';
-      }
-      if (_regNumberController.text.isEmpty) {
-        _regNumberController.text = profile.medicalRegNumber ?? '';
-      }
-      _initialDataLoaded = true;
-    }
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -259,7 +226,8 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                 backgroundColor: AppColors.doctor,
                 foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                  // FIX: Increased left padding from 16 to 60 to avoid overlap with back arrow
+                  titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
                   title: const Text(
                     'New Prescription',
                     style: TextStyle(fontWeight: FontWeight.bold),
@@ -305,24 +273,13 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 1. Issuer Details (Locked)
-                          _buildExpansionSection(
-                            title: 'Issuer Details (You)',
-                            icon: Icons.badge_rounded,
-                            initiallyExpanded: true,
-                            children: [
-                              _buildDoctorDetailsInputs(doctorProfile),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          // 2. Diagnosis
+                          // 1. Diagnosis
                           _buildSectionTitle('Clinical Diagnosis', Icons.healing_rounded),
                           const SizedBox(height: 8),
                           _buildDiagnosisField(),
                           const SizedBox(height: 24),
 
-                          // 3. Medications
+                          // 2. Medications
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -347,7 +304,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
                           const SizedBox(height: 24),
 
-                          // 4. Details
+                          // 3. Details
                           _buildExpansionSection(
                             title: 'Prescription Details & Validity',
                             icon: Icons.calendar_today_rounded,
@@ -355,7 +312,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // 5. Safety
+                          // 4. Safety
                           _buildExpansionSection(
                             title: 'Safety Checks & Alerts',
                             icon: Icons.verified_user_rounded,
@@ -363,19 +320,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // 6. Upload
-                          _buildExpansionSection(
-                            title: 'Digital Copy / Upload',
-                            icon: Icons.upload_file_rounded,
-                            children: [
-                              PrescriptionUploadWidget(
-                                onChanged: (upload) => setState(() => _prescriptionUpload = upload),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // 7. Notes
+                          // 5. Notes
                           _buildExpansionSection(
                             title: 'Notes & Instructions',
                             icon: Icons.note_alt_rounded,
@@ -392,7 +337,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // 8. Privacy
+                          // 6. Privacy
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
@@ -443,87 +388,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   }
 
   // --- WIDGET BUILDERS ---
-
-  Widget _buildDoctorDetailsInputs(UserProfile? profile) {
-    return Column(
-      children: [
-        // Read-only Name Field
-        TextFormField(
-          initialValue: profile?.fullName ?? 'Dr. Unknown',
-          readOnly: true,
-          decoration: const InputDecoration(
-            labelText: 'Issuing Doctor',
-            prefixIcon: Icon(Icons.person_outline_rounded),
-            border: OutlineInputBorder(),
-            filled: true,
-            fillColor: Color(0xFFF5F5F5), // Light grey to indicate read-only
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Hospital/Clinic - LOCKED
-        TextFormField(
-          controller: _hospitalController,
-          readOnly: true,
-          decoration: const InputDecoration(
-            labelText: 'Hospital / Clinic Name',
-            prefixIcon: Icon(Icons.local_hospital_outlined),
-            border: OutlineInputBorder(),
-            filled: true,
-            fillColor: Color(0xFFF5F5F5),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _specializationController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Specialization',
-                  prefixIcon: Icon(Icons.school_outlined),
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Color(0xFFF5F5F5),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextFormField(
-                controller: _regNumberController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Medical Reg. No',
-                  prefixIcon: Icon(Icons.numbers_rounded),
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Color(0xFFF5F5F5),
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        // Helper text
-        const Padding(
-          padding: EdgeInsets.only(top: 12.0, left: 4),
-          child: Row(
-            children: [
-              Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey),
-              SizedBox(width: 6),
-              Text(
-                'To change these details, edit your Profile.',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
