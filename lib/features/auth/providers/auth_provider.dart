@@ -37,7 +37,6 @@ final biometricTypeNameProvider = FutureProvider<String>((ref) async {
 });
 
 /// Provider to check if biometric is enabled
-/// This is the "Listener" that needs to be refreshed when toggle changes
 final biometricEnabledProvider = FutureProvider<bool>((ref) async {
   return await SecureStorageService.instance.isBiometricEnabled();
 });
@@ -49,7 +48,7 @@ final kycStatusProvider = FutureProvider<KYCVerification?>((ref) async {
 
 /// Auth notifier for handling authentication operations
 class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
-  final Ref ref; // Add Ref to access other providers
+  final Ref ref;
 
   AuthNotifier(this.ref) : super(const AsyncValue.loading()) {
     _init();
@@ -84,7 +83,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       // 1. Update Storage
       await _storage.setBiometricEnabled(enable);
 
-      // 2. CRITICAL FIX: Force the UI providers to refresh immediately
+      // 2. Force the UI providers to refresh immediately
       ref.invalidate(biometricEnabledProvider);
 
     } catch (e) {
@@ -92,29 +91,42 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     }
   }
 
-  /// Sign up
+  /// Sign up with Doctor support
   Future<void> signUp({
     required String email,
     required String password,
     required String fullName,
     required String phone,
     required String role,
+    // Optional Doctor fields
+    String? hospitalName,
+    String? specialization,
+    String? medicalRegNumber,
   }) async {
     state = const AsyncValue.loading();
     try {
       final response = await _supabase.signUp(
         email: email,
         password: password,
-        data: {'full_name': fullName, 'phone': phone, 'role': role},
+        data: {
+          'full_name': fullName,
+          'phone': phone,
+          'role': role,
+        },
       );
 
       if (response.user == null) throw Exception('Failed to create account');
 
+      // Create profile with all fields
       await _supabase.upsertProfile({
         'email': email,
         'phone': phone,
         'full_name': fullName,
         'role': role,
+        // Insert doctor specific fields if present
+        if (hospitalName != null) 'hospital_clinic_name': hospitalName,
+        if (specialization != null) 'specialization': specialization,
+        if (medicalRegNumber != null) 'medical_registration_number': medicalRegNumber,
       });
 
       await _createRoleRecord(role);

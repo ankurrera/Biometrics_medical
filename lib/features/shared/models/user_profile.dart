@@ -9,6 +9,11 @@ class UserProfile {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
+  // Doctor Specific Fields (Added)
+  final String? hospitalName;
+  final String? specialization;
+  final String? medicalRegNumber;
+
   const UserProfile({
     required this.id,
     required this.email,
@@ -18,6 +23,9 @@ class UserProfile {
     this.avatarUrl,
     required this.createdAt,
     this.updatedAt,
+    this.hospitalName,
+    this.specialization,
+    this.medicalRegNumber,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -32,6 +40,10 @@ class UserProfile {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : null,
+      // Map database columns to Dart properties
+      hospitalName: json['hospital_clinic_name'] as String?,
+      specialization: json['specialization'] as String?,
+      medicalRegNumber: json['medical_registration_number'] as String?,
     );
   }
 
@@ -45,6 +57,10 @@ class UserProfile {
       'avatar_url': avatarUrl,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
+      // Include new fields in JSON
+      'hospital_clinic_name': hospitalName,
+      'specialization': specialization,
+      'medical_registration_number': medicalRegNumber,
     };
   }
 
@@ -77,6 +93,9 @@ class UserProfile {
     String? avatarUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? hospitalName,
+    String? specialization,
+    String? medicalRegNumber,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -87,7 +106,9 @@ class UserProfile {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      hospitalName: hospitalName ?? this.hospitalName,
+      specialization: specialization ?? this.specialization,
+      medicalRegNumber: medicalRegNumber ?? this.medicalRegNumber,
     );
   }
 }
-

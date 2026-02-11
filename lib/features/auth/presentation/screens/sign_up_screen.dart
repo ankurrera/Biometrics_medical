@@ -22,8 +22,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  // Doctor Specific Controllers
+  final _hospitalController = TextEditingController();
+  final _specializationController = TextEditingController();
+  final _medRegController = TextEditingController();
+
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -33,6 +40,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _hospitalController.dispose();
+    _specializationController.dispose();
+    _medRegController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -71,16 +81,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     try {
       await ref.read(authNotifierProvider.notifier).signUp(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            fullName: _fullNameController.text.trim(),
-            phone: _phoneController.text.trim(),
-            role: widget.role,
-          );
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        fullName: _fullNameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        role: widget.role,
+        // Pass doctor fields if role is doctor
+        hospitalName: widget.role == 'doctor' ? _hospitalController.text.trim() : null,
+        specialization: widget.role == 'doctor' ? _specializationController.text.trim() : null,
+        medicalRegNumber: widget.role == 'doctor' ? _medRegController.text.trim() : null,
+      );
 
       if (mounted) {
-        // After signup, go to KYC verification for patients
-        // For other roles, go to biometric enrollment
         if (widget.role == 'patient') {
           context.go(RouteNames.kycVerification);
         } else {
@@ -92,8 +104,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         final originalError = e.toString();
         String errorMessage = originalError;
         bool showSignInAction = false;
-        
-        // Parse and provide user-friendly error messages
+
         if (originalError.contains('over_email_send_rate_limit')) {
           errorMessage = '⏱️ Too many sign-up attempts. Please wait a minute and try again.';
         } else if (originalError.contains('User already registered') || originalError.contains('already registered')) {
@@ -107,25 +118,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           errorMessage = '📬 Please check your email and verify your account before signing in.';
         } else if (originalError.contains('Network') || originalError.contains('network')) {
           errorMessage = '📡 Network error. Please check your connection and try again.';
-        } else if (originalError.contains('AuthApiException')) {
-          // Extract message from AuthApiException format
-          final match = RegExp(r'message:\s*([^,)]+)').firstMatch(originalError);
-          if (match != null && match.group(1) != null) {
-            errorMessage = match.group(1)!.trim();
-          }
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 5), // Longer duration for rate limit messages
+            duration: const Duration(seconds: 5),
             action: showSignInAction
                 ? SnackBarAction(
-                    label: 'Sign In',
-                    textColor: Colors.white,
-                    onPressed: () => context.pop(),
-                  )
+              label: 'Sign In',
+              textColor: Colors.white,
+              onPressed: () => context.pop(),
+            )
                 : null,
           ),
         );
@@ -137,6 +142,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDoctor = widget.role == 'doctor';
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -147,7 +154,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
-                // Back button
                 IconButton(
                   onPressed: () => context.pop(),
                   icon: const Icon(Icons.arrow_back_rounded),
@@ -156,7 +162,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                // Role indicator
+                // Role Badge
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -176,7 +182,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Title
                 const Text(
                   'Create Account',
                   style: TextStyle(
@@ -187,7 +192,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Fill in your details to get started',
+                  isDoctor
+                      ? 'Enter your professional details to register'
+                      : 'Fill in your details to get started',
                   style: TextStyle(
                     fontSize: 15,
                     color: Theme.of(context)
@@ -197,7 +204,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                // Full name field
+
+                // Common Fields
                 AuthTextField(
                   controller: _fullNameController,
                   label: 'Full Name',
@@ -212,7 +220,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Email field
                 AuthTextField(
                   controller: _emailController,
                   label: 'Email',
@@ -230,7 +237,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Phone field
                 AuthTextField(
                   controller: _phoneController,
                   label: 'Phone Number',
@@ -245,7 +251,47 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Password field
+
+                // DOCTOR SPECIFIC FIELDS
+                if (isDoctor) ...[
+                  const Divider(height: 32),
+                  const Text(
+                    'Professional Details',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  AuthTextField(
+                    controller: _hospitalController,
+                    label: 'Hospital / Clinic Name',
+                    hint: 'Where do you practice?',
+                    prefixIcon: Icons.local_hospital_outlined,
+                    textCapitalization: TextCapitalization.words,
+                    validator: (value) => value!.isEmpty ? 'Required for doctors' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  AuthTextField(
+                    controller: _specializationController,
+                    label: 'Specialization',
+                    hint: 'e.g. Cardiologist, General Physician',
+                    prefixIcon: Icons.school_outlined,
+                    textCapitalization: TextCapitalization.words,
+                    validator: (value) => value!.isEmpty ? 'Required for doctors' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  AuthTextField(
+                    controller: _medRegController,
+                    label: 'Medical Registration No. (Optional)',
+                    hint: 'Registration ID',
+                    prefixIcon: Icons.badge_outlined,
+                  ),
+                  const Divider(height: 32),
+                ],
+
+                // Password Fields
                 AuthTextField(
                   controller: _passwordController,
                   label: 'Password',
@@ -273,7 +319,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                // Confirm password field
                 AuthTextField(
                   controller: _confirmPasswordController,
                   label: 'Confirm Password',
@@ -283,7 +328,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   suffixIcon: IconButton(
                     onPressed: () {
                       setState(() =>
-                          _obscureConfirmPassword = !_obscureConfirmPassword);
+                      _obscureConfirmPassword = !_obscureConfirmPassword);
                     },
                     icon: Icon(
                       _obscureConfirmPassword
@@ -309,13 +354,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     onPressed: _isLoading ? null : _signUp,
                     child: _isLoading
                         ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                         : const Text('Create Account'),
                   ),
                 ),
@@ -348,4 +393,3 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 }
-

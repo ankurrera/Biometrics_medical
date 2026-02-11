@@ -8,6 +8,9 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/biometric_guard.dart';
 import '../../../../services/supabase_service.dart';
 import '../../../../services/audit_service.dart';
+// Import auth/profile provider to get Doctor's name
+import '../../../shared/models/user_profile.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 // Imports for parity
 import '../../../patient/presentation/widgets/prescription_upload_widget.dart';
@@ -32,6 +35,12 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _diagnosisController = TextEditingController();
   final _notesController = TextEditingController();
+
+  // Doctor Details Controllers (New)
+  final _hospitalController = TextEditingController();
+  final _regNumberController = TextEditingController();
+  final _specializationController = TextEditingController();
+
   bool _isPublic = false;
   bool _isLoading = false;
 
@@ -64,6 +73,9 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   void dispose() {
     _diagnosisController.dispose();
     _notesController.dispose();
+    _hospitalController.dispose();
+    _regNumberController.dispose();
+    _specializationController.dispose();
     for (final med in _medications) {
       med.dispose();
     }
@@ -116,7 +128,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     }
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(UserProfile? doctorProfile) async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_medications.isEmpty && !_prescriptionUpload.hasFile) {
@@ -130,6 +142,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
       return;
     }
 
+    // Biometric Guard
     final authenticated = await showBiometricAuthDialog(
       context: context,
       reason: 'Verify identity to sign prescription',
@@ -141,12 +154,27 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // 1. Prepare Doctor Details Metadata
+      // This ensures the Patient side sees Name, Clinic, etc. immediately
+      final doctorDetails = {
+        'doctor_name': doctorProfile?.fullName ?? 'Dr. Unknown',
+        'hospital_clinic_name': _hospitalController.text.trim().isNotEmpty
+            ? _hospitalController.text.trim()
+            : 'Private Practice',
+        'specialization': _specializationController.text.trim(),
+        'medical_registration_number': _regNumberController.text.trim(),
+        'signature_uploaded': true, // Digital signature verified by biometric
+      };
+
+      // 2. Prepare Complete Metadata
       final metadata = {
         'biometric_verified': true,
         'signed_at': DateTime.now().toIso8601String(),
         'prescription_date': _prescriptionDate.toIso8601String(),
         'valid_until': _validUntil.toIso8601String(),
         'type': _prescriptionType.name,
+        // Crucial: Embed doctor details here for the Patient View
+        'doctor_details': doctorDetails,
         'safety_flags': {
           'allergies_mentioned': _allergiesMentioned,
           'pregnancy_breastfeeding': _pregnancyBreastfeeding,
@@ -170,15 +198,15 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         resourceType: 'prescription',
         metadata: {
           'patient_id': widget.patientId,
+          'doctor_name': doctorProfile?.fullName,
           'biometric_verified': true,
-          'signed_at': DateTime.now().toIso8601String(),
         },
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Prescription Signed & Issued'),
+            content: Text('Prescription Signed & Issued Successfully'),
             backgroundColor: AppColors.doctor,
             behavior: SnackBarBehavior.floating,
           ),
@@ -198,175 +226,198 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch current user profile to get Doctor Name
+    final currentUserAsync = ref.watch(currentProfileProvider);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 120.0,
-            floating: false,
-            pinned: true,
-            backgroundColor: AppColors.doctor,
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
-              title: const Text(
-                'New Prescription',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      AppColors.doctor,
-                      AppColors.doctor.withOpacity(0.8),
-                    ],
+      body: currentUserAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (doctorProfile) {
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 120.0,
+                floating: false,
+                pinned: true,
+                backgroundColor: AppColors.doctor,
+                foregroundColor: Colors.white,
+                flexibleSpace: FlexibleSpaceBar(
+                  titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                  title: const Text(
+                    'New Prescription',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                ),
-                child: const Stack(
-                  children: [
-                    Positioned(
-                      right: -20,
-                      top: -20,
-                      child: Icon(
-                        Icons.medication_rounded,
-                        size: 150,
-                        color: Colors.white10,
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                        colors: [
+                          AppColors.doctor,
+                          AppColors.doctor.withOpacity(0.8),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          SliverPadding(
-            padding: AppSpacing.screenPadding,
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // Patient Card
-                _buildPatientCard(),
-                const SizedBox(height: 24),
-
-                // Form Content
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Diagnosis Section
-                      _buildSectionTitle('Clinical Diagnosis', Icons.healing_rounded),
-                      const SizedBox(height: 8),
-                      _buildDiagnosisField(),
-                      const SizedBox(height: 24),
-
-                      // Medications Section
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildSectionTitle('Rx Medications', Icons.local_pharmacy_rounded),
-                          FilledButton.icon(
-                            onPressed: _addMedication,
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Add Drug'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.doctor,
-                              foregroundColor: Colors.white,
-                              visualDensity: VisualDensity.compact,
-                            ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          right: -20,
+                          top: -20,
+                          child: Icon(
+                            Icons.medication_rounded,
+                            size: 150,
+                            color: Colors.white.withOpacity(0.1),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (_medications.isEmpty)
-                        _buildEmptyState()
-                      else
-                        ...List.generate(_medications.length, (index) => _buildMedicationCard(index)),
-
-                      const SizedBox(height: 24),
-
-                      // Optional Details (Collapsible)
-                      _buildExpansionSection(
-                        title: 'Prescription Details & Validity',
-                        icon: Icons.calendar_today_rounded,
-                        children: [_buildMetadataSection()],
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildExpansionSection(
-                        title: 'Safety Checks & Alerts',
-                        icon: Icons.verified_user_rounded,
-                        children: [_buildSafetyFlags()],
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildExpansionSection(
-                        title: 'Digital Copy / Upload',
-                        icon: Icons.upload_file_rounded,
-                        children: [
-                          PrescriptionUploadWidget(
-                            onChanged: (upload) => setState(() => _prescriptionUpload = upload),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      _buildExpansionSection(
-                        title: 'Notes & Instructions',
-                        icon: Icons.note_alt_rounded,
-                        children: [
-                          TextFormField(
-                            controller: _notesController,
-                            decoration: const InputDecoration(
-                              hintText: 'Add clinical notes, patient instructions...',
-                              border: OutlineInputBorder(),
-                            ),
-                            maxLines: 3,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Privacy Toggle
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.02),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
-                        child: SwitchListTile.adaptive(
-                          title: const Text('Emergency Access', style: TextStyle(fontWeight: FontWeight.w600)),
-                          subtitle: const Text('Allow first responders to view via QR'),
-                          value: _isPublic,
-                          onChanged: (v) => setState(() => _isPublic = v),
-                          secondary: Icon(
-                            _isPublic ? Icons.lock_open_rounded : Icons.lock_rounded,
-                            color: _isPublic ? AppColors.warning : Colors.grey,
-                          ),
-                          activeColor: AppColors.doctor,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                      const SizedBox(height: 100), // Space for FAB
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ]),
-            ),
-          ),
-        ],
+              ),
+
+              SliverPadding(
+                padding: AppSpacing.screenPadding,
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Patient Card
+                    _buildPatientCard(),
+                    const SizedBox(height: 24),
+
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Issuer Details (Added for your request)
+                          _buildExpansionSection(
+                            title: 'Issuer Details (You)',
+                            icon: Icons.badge_rounded,
+                            initiallyExpanded: true,
+                            children: [
+                              _buildDoctorDetailsInputs(doctorProfile),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          // 2. Diagnosis
+                          _buildSectionTitle('Clinical Diagnosis', Icons.healing_rounded),
+                          const SizedBox(height: 8),
+                          _buildDiagnosisField(),
+                          const SizedBox(height: 24),
+
+                          // 3. Medications
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildSectionTitle('Rx Medications', Icons.local_pharmacy_rounded),
+                              FilledButton.icon(
+                                onPressed: _addMedication,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Add Drug'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.doctor,
+                                  foregroundColor: Colors.white,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (_medications.isEmpty)
+                            _buildEmptyState()
+                          else
+                            ...List.generate(_medications.length, (index) => _buildMedicationCard(index)),
+
+                          const SizedBox(height: 24),
+
+                          // 4. Details
+                          _buildExpansionSection(
+                            title: 'Prescription Details & Validity',
+                            icon: Icons.calendar_today_rounded,
+                            children: [_buildMetadataSection()],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 5. Safety
+                          _buildExpansionSection(
+                            title: 'Safety Checks & Alerts',
+                            icon: Icons.verified_user_rounded,
+                            children: [_buildSafetyFlags()],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 6. Upload
+                          _buildExpansionSection(
+                            title: 'Digital Copy / Upload',
+                            icon: Icons.upload_file_rounded,
+                            children: [
+                              PrescriptionUploadWidget(
+                                onChanged: (upload) => setState(() => _prescriptionUpload = upload),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 7. Notes
+                          _buildExpansionSection(
+                            title: 'Notes & Instructions',
+                            icon: Icons.note_alt_rounded,
+                            children: [
+                              TextFormField(
+                                controller: _notesController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Add clinical notes, patient instructions...',
+                                  border: OutlineInputBorder(),
+                                ),
+                                maxLines: 3,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // 8. Privacy
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: SwitchListTile.adaptive(
+                              title: const Text('Emergency Access', style: TextStyle(fontWeight: FontWeight.w600)),
+                              subtitle: const Text('Allow first responders to view via QR'),
+                              value: _isPublic,
+                              onChanged: (v) => setState(() => _isPublic = v),
+                              secondary: Icon(
+                                _isPublic ? Icons.lock_open_rounded : Icons.lock_rounded,
+                                color: _isPublic ? AppColors.warning : Colors.grey,
+                              ),
+                              activeColor: AppColors.doctor,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isLoading ? null : _submit,
+        onPressed: _isLoading
+            ? null
+            : () {
+          // Read the profile data again for submission
+          ref.read(currentProfileProvider).whenData((profile) {
+            _submit(profile);
+          });
+        },
         backgroundColor: AppColors.doctor,
         icon: _isLoading
             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -377,6 +428,66 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   }
 
   // --- WIDGET BUILDERS ---
+
+  Widget _buildDoctorDetailsInputs(UserProfile? profile) {
+    return Column(
+      children: [
+        // Read-only Name Field
+        TextFormField(
+          initialValue: profile?.fullName ?? 'Dr. Unknown',
+          readOnly: true,
+          decoration: const InputDecoration(
+            labelText: 'Issuing Doctor',
+            prefixIcon: Icon(Icons.person_outline_rounded),
+            border: OutlineInputBorder(),
+            filled: true,
+            fillColor: Color(0xFFF5F5F5), // Light grey to indicate read-only
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Clinic Name - Editable
+        TextFormField(
+          controller: _hospitalController,
+          decoration: const InputDecoration(
+            labelText: 'Hospital / Clinic Name',
+            hintText: 'e.g. City General Hospital',
+            prefixIcon: Icon(Icons.local_hospital_outlined),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _specializationController,
+                decoration: const InputDecoration(
+                  labelText: 'Specialization',
+                  hintText: 'e.g. Cardiologist',
+                  prefixIcon: Icon(Icons.school_outlined),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _regNumberController,
+                decoration: const InputDecoration(
+                  labelText: 'Medical Reg. No',
+                  hintText: 'Optional',
+                  prefixIcon: Icon(Icons.numbers_rounded),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
   Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
@@ -458,12 +569,9 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         _diagnosisController.text = selection;
       },
       fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-        // Sync local controller if needed, but here we use the one passed by Autocomplete
-        // However, we want to bind our state controller to this input
         controller.addListener(() {
           _diagnosisController.text = controller.text;
         });
-
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
@@ -517,7 +625,8 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   Widget _buildExpansionSection({
     required String title,
     required IconData icon,
-    required List<Widget> children
+    required List<Widget> children,
+    bool initiallyExpanded = false,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -528,6 +637,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          initiallyExpanded: initiallyExpanded,
           leading: Icon(icon, color: AppColors.doctor),
           title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -695,7 +805,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Autocomplete Medicine Name
                 Autocomplete<String>(
                   optionsBuilder: (TextEditingValue textEditingValue) {
                     if (textEditingValue.text == '') return const Iterable<String>.empty();
@@ -721,7 +830,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Quick Frequency Chips + Custom Input
                 SizedBox(
                   height: 40,
                   child: ListView(
@@ -767,7 +875,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Duration & Qty
                 Row(
                   children: [
                     Expanded(
