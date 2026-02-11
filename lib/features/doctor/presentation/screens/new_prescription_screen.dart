@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/biometric_guard.dart';
 import '../../../../services/supabase_service.dart';
 import '../../../../services/audit_service.dart';
+
+// Imports for parity
+import '../../../patient/presentation/widgets/prescription_upload_widget.dart';
+import '../../../patient/models/prescription_input_models.dart';
 
 class NewPrescriptionScreen extends ConsumerStatefulWidget {
   final String patientId;
@@ -23,15 +28,37 @@ class NewPrescriptionScreen extends ConsumerStatefulWidget {
       _NewPrescriptionScreenState();
 }
 
-class _NewPrescriptionScreenState
-    extends ConsumerState<NewPrescriptionScreen> {
+class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _diagnosisController = TextEditingController();
   final _notesController = TextEditingController();
   bool _isPublic = false;
   bool _isLoading = false;
 
+  // Metadata Fields
+  DateTime _prescriptionDate = DateTime.now();
+  DateTime _validUntil = DateTime.now().add(const Duration(days: 30));
+  PrescriptionType _prescriptionType = PrescriptionType.newPrescription;
+
+  // Upload Field
+  PrescriptionUpload _prescriptionUpload = const PrescriptionUpload();
+
+  // Safety Flags
+  bool? _allergiesMentioned;
+  bool? _pregnancyBreastfeeding;
+  bool? _chronicConditionLinked;
+
   final List<_MedicationEntry> _medications = [];
+
+  // Mock Data for Autocomplete
+  final List<String> _commonDiagnoses = [
+    'Viral Fever', 'Hypertension', 'Type 2 Diabetes', 'Acute Bronchitis', 'Migraine', 'Gastritis'
+  ];
+
+  final List<String> _commonMedicines = [
+    'Paracetamol 500mg', 'Amoxicillin 500mg', 'Metformin 500mg', 'Cetirizine 10mg',
+    'Ibuprofen 400mg', 'Omeprazole 20mg', 'Azithromycin 500mg'
+  ];
 
   @override
   void dispose() {
@@ -56,57 +83,88 @@ class _NewPrescriptionScreenState
     });
   }
 
+  Future<void> _selectDate(BuildContext context, bool isValidUntil) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isValidUntil ? _validUntil : _prescriptionDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.doctor, // Doctor branding color
+              onPrimary: Colors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        if (isValidUntil) {
+          _validUntil = picked;
+        } else {
+          _prescriptionDate = picked;
+          if (_validUntil.isBefore(_prescriptionDate)) {
+            _validUntil = _prescriptionDate.add(const Duration(days: 30));
+          }
+        }
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_medications.isEmpty) {
+
+    if (_medications.isEmpty && !_prescriptionUpload.hasFile) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please add at least one medication'),
+          content: Text('Please add medications OR upload a prescription file'),
           backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
-    // Require biometric authentication before submitting prescription
     final authenticated = await showBiometricAuthDialog(
       context: context,
-      reason: 'Authenticate to sign and submit prescription',
+      reason: 'Verify identity to sign prescription',
       allowBiometricOnly: false,
     );
 
-    if (!authenticated) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Biometric authentication required to submit prescription'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-      return;
-    }
+    if (!authenticated) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // Create prescription with biometric verification metadata
+      final metadata = {
+        'biometric_verified': true,
+        'signed_at': DateTime.now().toIso8601String(),
+        'prescription_date': _prescriptionDate.toIso8601String(),
+        'valid_until': _validUntil.toIso8601String(),
+        'type': _prescriptionType.name,
+        'safety_flags': {
+          'allergies_mentioned': _allergiesMentioned,
+          'pregnancy_breastfeeding': _pregnancyBreastfeeding,
+          'chronic_condition_linked': _chronicConditionLinked,
+        },
+        if (_prescriptionUpload.hasFile)
+          'upload': _prescriptionUpload.toJson(),
+      };
+
       await SupabaseService.instance.createPrescription(
         patientId: widget.patientId,
         diagnosis: _diagnosisController.text.trim(),
-        notes: _notesController.text.trim().isNotEmpty
-            ? _notesController.text.trim()
-            : null,
+        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
         isPublic: _isPublic,
         items: _medications.map((med) => med.toJson()).toList(),
-        // Add metadata for biometric verification
-        metadata: {
-          'biometric_verified': true,
-          'signed_at': DateTime.now().toIso8601String(),
-        },
+        metadata: metadata,
       );
 
-      // Log the action in audit trail
       await AuditService.instance.logAction(
         action: AuditAction.createPrescription,
         resourceType: 'prescription',
@@ -120,8 +178,9 @@ class _NewPrescriptionScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Prescription created and signed successfully'),
-            backgroundColor: AppColors.success,
+            content: Text('Prescription Signed & Issued'),
+            backgroundColor: AppColors.doctor,
+            behavior: SnackBarBehavior.floating,
           ),
         );
         context.pop();
@@ -129,10 +188,7 @@ class _NewPrescriptionScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -143,224 +199,441 @@ class _NewPrescriptionScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('New Prescription'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: AppSpacing.screenPadding,
-          children: [
-            // Patient info
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.doctor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+      backgroundColor: Colors.grey[50],
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120.0,
+            floating: false,
+            pinned: true,
+            backgroundColor: AppColors.doctor,
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+              title: const Text(
+                'New Prescription',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.doctor.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.person_rounded,
-                      color: AppColors.doctor,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Patient',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.doctor,
-                          ),
-                        ),
-                        Text(
-                          widget.patientName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Diagnosis
-            const Text(
-              'Diagnosis',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _diagnosisController,
-              decoration: const InputDecoration(
-                hintText: 'Enter diagnosis',
-              ),
-              maxLines: 2,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a diagnosis';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            // Notes
-            const Text(
-              'Notes (optional)',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                hintText: 'Additional notes',
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-            // Medications
-            Row(
-              children: [
-                const Text(
-                  'Medications',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: _addMedication,
-                  icon: const Icon(Icons.add_rounded, size: 20),
-                  label: const Text('Add'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (_medications.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(24),
+              background: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                  gradient: LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                    colors: [
+                      AppColors.doctor,
+                      AppColors.doctor.withOpacity(0.8),
+                    ],
                   ),
                 ),
-                child: Column(
+                child: const Stack(
                   children: [
-                    Icon(
-                      Icons.medication_outlined,
-                      size: 40,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.3),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'No medications added',
-                      style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.5),
+                    Positioned(
+                      right: -20,
+                      top: -20,
+                      child: Icon(
+                        Icons.medication_rounded,
+                        size: 150,
+                        color: Colors.white10,
                       ),
                     ),
                   ],
                 ),
-              )
-            else
-              ...List.generate(_medications.length, (index) {
-                return _buildMedicationCard(index);
-              }),
-            const SizedBox(height: 24),
-            // Public toggle
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _isPublic ? Icons.public_rounded : Icons.lock_rounded,
-                    color: _isPublic ? AppColors.warning : AppColors.secondary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Make Public',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          'Visible to first responders via QR',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: _isPublic,
-                    onChanged: (value) => setState(() => _isPublic = value),
-                    activeColor: AppColors.primary,
-                  ),
-                ],
               ),
             ),
-            const SizedBox(height: 32),
-            // Submit button
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submit,
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+          ),
+
+          SliverPadding(
+            padding: AppSpacing.screenPadding,
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // Patient Card
+                _buildPatientCard(),
+                const SizedBox(height: 24),
+
+                // Form Content
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Diagnosis Section
+                      _buildSectionTitle('Clinical Diagnosis', Icons.healing_rounded),
+                      const SizedBox(height: 8),
+                      _buildDiagnosisField(),
+                      const SizedBox(height: 24),
+
+                      // Medications Section
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSectionTitle('Rx Medications', Icons.local_pharmacy_rounded),
+                          FilledButton.icon(
+                            onPressed: _addMedication,
+                            icon: const Icon(Icons.add, size: 18),
+                            label: const Text('Add Drug'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.doctor,
+                              foregroundColor: Colors.white,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                        ],
                       ),
-                    )
-                  : const Text('Create Prescription'),
+                      const SizedBox(height: 12),
+                      if (_medications.isEmpty)
+                        _buildEmptyState()
+                      else
+                        ...List.generate(_medications.length, (index) => _buildMedicationCard(index)),
+
+                      const SizedBox(height: 24),
+
+                      // Optional Details (Collapsible)
+                      _buildExpansionSection(
+                        title: 'Prescription Details & Validity',
+                        icon: Icons.calendar_today_rounded,
+                        children: [_buildMetadataSection()],
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildExpansionSection(
+                        title: 'Safety Checks & Alerts',
+                        icon: Icons.verified_user_rounded,
+                        children: [_buildSafetyFlags()],
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildExpansionSection(
+                        title: 'Digital Copy / Upload',
+                        icon: Icons.upload_file_rounded,
+                        children: [
+                          PrescriptionUploadWidget(
+                            onChanged: (upload) => setState(() => _prescriptionUpload = upload),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildExpansionSection(
+                        title: 'Notes & Instructions',
+                        icon: Icons.note_alt_rounded,
+                        children: [
+                          TextFormField(
+                            controller: _notesController,
+                            decoration: const InputDecoration(
+                              hintText: 'Add clinical notes, patient instructions...',
+                              border: OutlineInputBorder(),
+                            ),
+                            maxLines: 3,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Privacy Toggle
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.02),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: SwitchListTile.adaptive(
+                          title: const Text('Emergency Access', style: TextStyle(fontWeight: FontWeight.w600)),
+                          subtitle: const Text('Allow first responders to view via QR'),
+                          value: _isPublic,
+                          onChanged: (v) => setState(() => _isPublic = v),
+                          secondary: Icon(
+                            _isPublic ? Icons.lock_open_rounded : Icons.lock_rounded,
+                            color: _isPublic ? AppColors.warning : Colors.grey,
+                          ),
+                          activeColor: AppColors.doctor,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      const SizedBox(height: 100), // Space for FAB
+                    ],
+                  ),
+                ),
+              ]),
             ),
-            const SizedBox(height: 24),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isLoading ? null : _submit,
+        backgroundColor: AppColors.doctor,
+        icon: _isLoading
+            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Icon(Icons.fingerprint_rounded),
+        label: Text(_isLoading ? 'Signing...' : 'Sign & Issue'),
+      ),
+    );
+  }
+
+  // --- WIDGET BUILDERS ---
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppColors.doctor),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPatientCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.doctor.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: AppColors.doctor.withOpacity(0.1),
+            child: Text(
+              widget.patientName.isNotEmpty ? widget.patientName[0].toUpperCase() : 'P',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.doctor),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'PRESCRIBING FOR',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.patientName,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                ),
+                Text(
+                  'ID: ${widget.patientId.substring(0, 8).toUpperCase()}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'Monospace'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiagnosisField() {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text == '') return const Iterable<String>.empty();
+        return _commonDiagnoses.where((String option) {
+          return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+        });
+      },
+      onSelected: (String selection) {
+        _diagnosisController.text = selection;
+      },
+      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+        // Sync local controller if needed, but here we use the one passed by Autocomplete
+        // However, we want to bind our state controller to this input
+        controller.addListener(() {
+          _diagnosisController.text = controller.text;
+        });
+
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          onEditingComplete: onEditingComplete,
+          decoration: InputDecoration(
+            hintText: 'e.g. Viral Fever',
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: const Icon(Icons.search_rounded, color: Colors.grey),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+          ),
+          validator: (value) => value == null || value.isEmpty ? 'Diagnosis required' : null,
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.medication_outlined, size: 48, color: Colors.grey.shade300),
+          const SizedBox(height: 12),
+          Text(
+            'No medications added yet',
+            style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+          ),
+          TextButton(
+            onPressed: _addMedication,
+            child: const Text('Add First Medication'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpansionSection({
+    required String title,
+    required IconData icon,
+    required List<Widget> children
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: Icon(icon, color: AppColors.doctor),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetadataSection() {
+    return Column(
+      children: [
+        const Divider(),
+        Row(
+          children: [
+            Expanded(
+              child: _buildDateTile('Prescribed', _prescriptionDate, () => _selectDate(context, false)),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildDateTile('Valid Until', _validUntil, () => _selectDate(context, true)),
+            ),
           ],
         ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<PrescriptionType>(
+          value: _prescriptionType,
+          decoration: const InputDecoration(
+            labelText: 'Prescription Type',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          items: PrescriptionType.values.map((t) => DropdownMenuItem(
+            value: t,
+            child: Text(t.displayName),
+          )).toList(),
+          onChanged: (v) => setState(() => _prescriptionType = v!),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateTile(String label, DateTime date, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(DateFormat('MMM dd, yyyy').format(date), style: const TextStyle(fontWeight: FontWeight.w600)),
+                const Spacer(),
+                const Icon(Icons.edit_calendar, size: 16, color: AppColors.doctor),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSafetyFlags() {
+    return Column(
+      children: [
+        _buildSafetyCheckTile('Checked for Allergies?', _allergiesMentioned, (v) => setState(() => _allergiesMentioned = v)),
+        const Divider(height: 1),
+        _buildSafetyCheckTile('Pregnancy / Lactation?', _pregnancyBreastfeeding, (v) => setState(() => _pregnancyBreastfeeding = v)),
+        const Divider(height: 1),
+        _buildSafetyCheckTile('Chronic Condition Check?', _chronicConditionLinked, (v) => setState(() => _chronicConditionLinked = v)),
+      ],
+    );
+  }
+
+  Widget _buildSafetyCheckTile(String title, bool? value, Function(bool?) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 13))),
+          ToggleButtons(
+            constraints: const BoxConstraints(minWidth: 45, minHeight: 32),
+            isSelected: [value == true, value == false, value == null],
+            onPressed: (index) {
+              if (index == 0) onChanged(true);
+              if (index == 1) onChanged(false);
+              if (index == 2) onChanged(null);
+            },
+            borderRadius: BorderRadius.circular(8),
+            selectedColor: Colors.white,
+            fillColor: AppColors.doctor,
+            children: const [
+              Text('Yes', style: TextStyle(fontSize: 12)),
+              Text('No', style: TextStyle(fontSize: 12)),
+              Text('N/A', style: TextStyle(fontSize: 12)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -368,137 +641,189 @@ class _NewPrescriptionScreenState
   Widget _buildMedicationCard(int index) {
     final med = _medications[index];
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.pharmacist.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
+          // Card Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.doctor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(
-                      color: AppColors.pharmacist,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.doctor),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Medication',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () => _removeMedication(index),
-                icon: const Icon(Icons.close_rounded, size: 20),
-                style: IconButton.styleFrom(
-                  foregroundColor: AppColors.error,
+                const SizedBox(width: 12),
+                Text('Drug #${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                  onPressed: () => _removeMedication(index),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: med.nameController,
-            decoration: const InputDecoration(
-              labelText: 'Medicine Name',
-              hintText: 'e.g., Paracetamol',
+              ],
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Required';
-              }
-              return null;
-            },
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: med.dosageController,
-                  decoration: const InputDecoration(
-                    labelText: 'Dosage',
-                    hintText: 'e.g., 500mg',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    return null;
+
+          // Card Body
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Autocomplete Medicine Name
+                Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') return const Iterable<String>.empty();
+                    return _commonMedicines.where((String option) => option.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                  },
+                  onSelected: (String selection) {
+                    med.nameController.text = selection;
+                  },
+                  fieldViewBuilder: (context, controller, focusNode, onComplete) {
+                    controller.addListener(() => med.nameController.text = controller.text);
+                    return TextFormField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Medicine Name',
+                        hintText: 'Search generic or brand name',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                    );
                   },
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: med.frequencyController,
-                  decoration: const InputDecoration(
-                    labelText: 'Frequency',
-                    hintText: 'e.g., Twice daily',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: med.durationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Duration',
-                    hintText: 'e.g., 7 days',
+                const SizedBox(height: 16),
+
+                // Quick Frequency Chips + Custom Input
+                SizedBox(
+                  height: 40,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _buildChip(med, '1-0-0', 'frequency'),
+                      const SizedBox(width: 8),
+                      _buildChip(med, '1-0-1', 'frequency'),
+                      const SizedBox(width: 8),
+                      _buildChip(med, '1-1-1', 'frequency'),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: med.quantityController,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                    hintText: 'e.g., 14',
-                  ),
-                  keyboardType: TextInputType.number,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: med.frequencyController,
+                        decoration: const InputDecoration(
+                          labelText: 'Frequency',
+                          hintText: 'e.g. BD',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 3,
+                      child: TextFormField(
+                        controller: med.dosageController,
+                        decoration: const InputDecoration(
+                          labelText: 'Dosage',
+                          hintText: 'e.g. 500mg',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: med.instructionsController,
-            decoration: const InputDecoration(
-              labelText: 'Instructions',
-              hintText: 'e.g., Take after meals',
+                const SizedBox(height: 16),
+
+                // Duration & Qty
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: med.durationController,
+                        decoration: const InputDecoration(
+                          labelText: 'Duration',
+                          hintText: 'e.g. 5 days',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: med.quantityController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Qty',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: med.instructionsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Special Instructions',
+                    hintText: 'e.g. After food',
+                    border: UnderlineInputBorder(),
+                    isDense: true,
+                  ),
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChip(_MedicationEntry med, String label, String field) {
+    return ActionChip(
+      label: Text(label),
+      backgroundColor: Colors.white,
+      side: BorderSide(color: Colors.grey.shade300),
+      onPressed: () {
+        if (field == 'frequency') {
+          med.frequencyController.text = label;
+        }
+      },
     );
   }
 }
@@ -537,4 +862,3 @@ class _MedicationEntry {
     };
   }
 }
-
