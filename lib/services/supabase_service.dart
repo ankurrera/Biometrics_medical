@@ -1,3 +1,4 @@
+import 'dart:typed_data'; // Added for Uint8List
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Singleton service for Supabase database operations
@@ -67,25 +68,20 @@ class SupabaseService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PATIENT OPERATIONS (CRITICAL FIX FOR FAMILY)
+  // PATIENT OPERATIONS
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Get patient data for a specific user or current user
-  /// [userId] - Optional ID to fetch data for (e.g., family member)
   Future<Map<String, dynamic>?> getPatientData({String? userId}) async {
     final targetId = userId ?? currentUserId;
     if (targetId == null) return null;
 
     try {
-      // 1. Try to get existing patient record
       var response = await client
           .from('patients')
           .select()
           .eq('user_id', targetId)
           .maybeSingle();
 
-      // 2. If no patient record exists, try to create one
-      // This is crucial for family members who haven't logged in themselves
       if (response == null) {
         try {
           response = await client
@@ -94,8 +90,6 @@ class SupabaseService {
               .select()
               .single();
         } catch (insertError) {
-          // If insert fails (e.g., RLS permission denied or concurrent create),
-          // try to get again
           response = await client
               .from('patients')
               .select()
@@ -106,7 +100,6 @@ class SupabaseService {
 
       return response;
     } catch (e) {
-      // Return null on failure so UI handles it gracefully
       return null;
     }
   }
@@ -128,6 +121,32 @@ class SupabaseService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // STORAGE OPERATIONS (NEW)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Uploads a file to Supabase Storage and returns the Public URL
+  Future<String?> uploadFile({
+    required String bucket,
+    required String path,
+    required Uint8List fileBytes,
+    required String contentType,
+  }) async {
+    try {
+      await client.storage.from(bucket).uploadBinary(
+        path,
+        fileBytes,
+        fileOptions: FileOptions(contentType: contentType, upsert: true),
+      );
+
+      final publicUrl = client.storage.from(bucket).getPublicUrl(path);
+      return publicUrl;
+    } catch (e) {
+      print('Storage Upload Error: $e');
+      return null;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // PRESCRIPTION OPERATIONS
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -142,7 +161,6 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  /// Create a new prescription
   Future<Map<String, dynamic>> createPrescription({
     required String patientId,
     required String diagnosis,
@@ -152,8 +170,6 @@ class SupabaseService {
     required List<Map<String, dynamic>> items,
     Map<String, dynamic>? metadata,
   }) async {
-    // 1. Create prescription header
-    // When patientEntered is true, doctor_id must be null
     final prescription = await client
         .from('prescriptions')
         .insert({
@@ -168,7 +184,6 @@ class SupabaseService {
         .select()
         .single();
 
-    // 2. Add prescription items
     final prescriptionId = prescription['id'];
     for (final item in items) {
       await client.from('prescription_items').insert({
@@ -181,7 +196,7 @@ class SupabaseService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // DISPENSING OPERATIONS & OTHERS
+  // DISPENSING & OTHER OPERATIONS
   // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> recordDispensing({
@@ -257,43 +272,35 @@ class SupabaseService {
 
   Future<int> getTodaysPrescriptionCount() async {
     if (currentUserId == null) return 0;
-
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-
     final result = await client
         .from('prescriptions')
         .select('id')
         .eq('doctor_id', currentUserId!)
         .gte('created_at', startOfDay.toIso8601String());
-
     return (result as List).length;
   }
 
   Future<int> getTotalPrescriptionCount() async {
     if (currentUserId == null) return 0;
-
     final result = await client
         .from('prescriptions')
         .select('id')
         .eq('doctor_id', currentUserId!);
-
     return (result as List).length;
   }
 
 
   Future<int> getTodaysDispensingCount() async {
     if (currentUserId == null) return 0;
-
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-
     final result = await client
         .from('dispensing_records')
         .select('id')
         .eq('pharmacist_id', currentUserId!)
         .gte('dispensed_at', startOfDay.toIso8601String());
-
     return (result as List).length;
   }
 

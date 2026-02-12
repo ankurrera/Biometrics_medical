@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart'; // Required for PDF launching
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -560,6 +561,34 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
 
   const _PrescriptionDetailsSheet({required this.prescription});
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // UPDATED LAUNCH LOGIC
+  // ──────────────────────────────────────────────────────────────────────────
+  Future<void> _launchPdf(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    try {
+      // Attempt 1: Launch as external application (Browser/PDF Viewer)
+      // We do NOT use canLaunchUrl here as it can be flaky without proper queries on Android
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+
+        // Attempt 2: Fallback to platform default if external fails
+        if (!await launchUrl(uri, mode: LaunchMode.platformDefault)) {
+          throw 'Could not open URL';
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open PDF. Please ensure a browser/PDF viewer is installed. Error: $e'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('MMMM d, yyyy');
@@ -599,6 +628,16 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
                 _buildHeader(context, status, dateFormat),
                 const SizedBox(height: 24),
 
+                // ──────────────────────────────────────────────
+                // NEW: Digital Prescription PDF Section
+                // ──────────────────────────────────────────────
+                if (prescription.pdfUrl != null) ...[
+                  _buildSectionTitle(context, 'Digital Prescription', Icons.picture_as_pdf_rounded),
+                  const SizedBox(height: 12),
+                  _buildPdfSection(context, prescription.pdfUrl!),
+                  const SizedBox(height: 20),
+                ],
+
                 // Doctor / Issuer Section
                 _buildSectionTitle(context, 'Doctor / Issuer', Icons.person_outline_rounded),
                 const SizedBox(height: 12),
@@ -635,10 +674,10 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
                   _buildSafetySection(context),
                 ],
 
-                // Uploaded Prescription
+                // Uploaded Prescription (Manual Upload Fallback)
                 if (prescription.uploadInfo != null && prescription.uploadInfo!.hasFile) ...[
                   const SizedBox(height: 20),
-                  _buildSectionTitle(context, 'Uploaded Prescription', Icons.file_present_outlined),
+                  _buildSectionTitle(context, 'Manual Upload', Icons.file_present_outlined),
                   const SizedBox(height: 12),
                   _buildUploadSection(context),
                 ],
@@ -652,6 +691,68 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildPdfSection(BuildContext context, String url) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primary.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.picture_as_pdf_rounded,
+              color: AppColors.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Official Digital Copy',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Digitally signed & verified',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => _launchPdf(context, url),
+            icon: const Icon(Icons.open_in_new_rounded, size: 18),
+            label: const Text('Open'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -728,7 +829,7 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
         icon = Icons.cancel_rounded;
         break;
       case VerificationStatus.pending:
-      default: // Added default back for safety if enum changes or value is missing
+      default:
         color = prescription.patientEntered ? AppColors.info : AppColors.doctor;
         text = prescription.patientEntered ? 'Patient Entered' : 'Doctor Issued';
         icon = prescription.patientEntered ? Icons.person_outline_rounded : Icons.medical_services_outlined;
@@ -1291,16 +1392,11 @@ class _PrescriptionDetailsSheet extends StatelessWidget {
       children: [
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Export feature coming soon'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
+            onPressed: prescription.pdfUrl != null
+                ? () => _launchPdf(context, prescription.pdfUrl!)
+                : null,
             icon: const Icon(Icons.download_outlined),
-            label: const Text('Export'),
+            label: const Text('Download PDF'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),

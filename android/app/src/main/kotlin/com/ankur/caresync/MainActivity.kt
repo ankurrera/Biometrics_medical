@@ -1,4 +1,4 @@
-package com.debojyoti.caresync
+package com.ankur.caresync
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

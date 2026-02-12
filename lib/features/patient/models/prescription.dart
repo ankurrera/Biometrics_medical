@@ -133,8 +133,8 @@ class Prescription {
           ? DateTime.parse(json['updated_at'] as String)
           : null,
       items: itemsJson
-              ?.map((e) => PrescriptionItem.fromJson(e as Map<String, dynamic>))
-              .toList() ??
+          ?.map((e) => PrescriptionItem.fromJson(e as Map<String, dynamic>))
+          .toList() ??
           [],
       doctor: doctorJson != null ? DoctorInfo.fromJson(doctorJson) : null,
       metadata: json['metadata'] as Map<String, dynamic>?,
@@ -202,7 +202,12 @@ class Prescription {
 
   // Get prescription date from metadata
   DateTime? get prescriptionDate {
-    final metadataInfo = metadata?['metadata'] as Map<String, dynamic>?;
+    final metadataInfo = metadata?['metadata'] as Map<String, dynamic>?; // Fallback for old structure
+    final directDate = metadata?['prescription_date'] as String?; // New structure
+
+    // Check direct first, then nested
+    if (directDate != null) return DateTime.tryParse(directDate);
+
     final dateStr = metadataInfo?['prescription_date'] as String?;
     if (dateStr == null) return null;
     return DateTime.tryParse(dateStr);
@@ -211,15 +216,25 @@ class Prescription {
   // Get valid until date from metadata
   DateTime? get validUntil {
     final metadataInfo = metadata?['metadata'] as Map<String, dynamic>?;
+    final directDate = metadata?['valid_until'] as String?;
+
+    if (directDate != null) return DateTime.tryParse(directDate);
+
     final dateStr = metadataInfo?['valid_until'] as String?;
     if (dateStr == null) return null;
     return DateTime.tryParse(dateStr);
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  //  NEW: Get PDF URL from metadata
+  // ──────────────────────────────────────────────────────────────────────────
+  String? get pdfUrl => metadata?['pdf_url'] as String?;
+
   // Get prescription type from metadata
   String? get prescriptionType {
     final metadataInfo = metadata?['metadata'] as Map<String, dynamic>?;
-    return metadataInfo?['prescription_type'] as String?;
+    final directType = metadata?['type'] as String?;
+    return directType ?? metadataInfo?['prescription_type'] as String?;
   }
 
   // Get doctor notes from metadata
@@ -228,7 +243,7 @@ class Prescription {
     if (notes == null || notes.trim().isEmpty) return null;
     // Check for placeholder values
     final lowerNotes = notes.trim().toLowerCase();
-    if (lowerNotes == 'mm' || lowerNotes == 'mmm' || 
+    if (lowerNotes == 'mm' || lowerNotes == 'mmm' ||
         lowerNotes == 'n/a' || lowerNotes == 'na') {
       return null; // Treat placeholders as no notes
     }
@@ -241,7 +256,7 @@ class Prescription {
     if (notes == null || notes.trim().isEmpty) return null;
     // Check for placeholder values
     final lowerNotes = notes.trim().toLowerCase();
-    if (lowerNotes == 'mm' || lowerNotes == 'mmm' || 
+    if (lowerNotes == 'mm' || lowerNotes == 'mmm' ||
         lowerNotes == 'n/a' || lowerNotes == 'na') {
       return null; // Treat placeholders as no notes
     }
@@ -302,7 +317,7 @@ class Prescription {
     }
     final lowerDiagnosis = diagnosis.trim().toLowerCase();
     // Check for common placeholder values
-    if (lowerDiagnosis == 'mm' || lowerDiagnosis == 'mmm' || 
+    if (lowerDiagnosis == 'mm' || lowerDiagnosis == 'mmm' ||
         lowerDiagnosis == 'n/a' || lowerDiagnosis == 'na' ||
         lowerDiagnosis == 'test' || lowerDiagnosis == 'placeholder') {
       return 'Incomplete diagnosis data';
@@ -515,7 +530,7 @@ class PrescriptionItem {
     if (instructions == null || instructions!.trim().isEmpty) return null;
     final lowerInstructions = instructions!.trim().toLowerCase();
     // Check for placeholder values
-    if (lowerInstructions == 'mm' || lowerInstructions == 'mmm' || 
+    if (lowerInstructions == 'mm' || lowerInstructions == 'mmm' ||
         lowerInstructions == 'n/a' || lowerInstructions == 'na' ||
         lowerInstructions.contains('take food mmm') ||
         lowerInstructions.contains('take after food mmm')) {
@@ -545,4 +560,3 @@ class DoctorInfo {
     );
   }
 }
-

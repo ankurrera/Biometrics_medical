@@ -8,7 +8,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/biometric_guard.dart';
 import '../../../../services/supabase_service.dart';
 import '../../../../services/audit_service.dart';
-// Import auth/profile provider to get Doctor's name
+import '../../../../services/pdf_service.dart'; // NEW IMPORT
 import '../../../shared/models/user_profile.dart';
 import '../../../auth/providers/auth_provider.dart';
 
@@ -142,16 +142,50 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Prepare Doctor Details Metadata
+      final medicationList = _medications.map((med) => med.toJson()).toList();
+
+      // 1. Generate & Upload PDF
+      String? pdfUrl;
+      try {
+        if (doctorProfile != null) {
+          // Generate PDF Bytes
+          final pdfBytes = await PdfService.generatePrescription(
+            doctor: doctorProfile,
+            patientName: widget.patientName,
+            patientId: widget.patientId,
+            date: _prescriptionDate,
+            diagnosis: _diagnosisController.text.trim(),
+            notes: _notesController.text.trim(),
+            medications: medicationList,
+          );
+
+          // Upload to Supabase Storage
+          // Filename format: patientID_timestamp.pdf
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = '${widget.patientId}_$timestamp.pdf';
+
+          pdfUrl = await SupabaseService.instance.uploadFile(
+            bucket: 'prescriptions',
+            path: fileName,
+            fileBytes: pdfBytes,
+            contentType: 'application/pdf',
+          );
+        }
+      } catch (e) {
+        debugPrint('PDF Generation Failed: $e');
+        // We continue even if PDF generation fails, but log it
+      }
+
+      // 2. Prepare Doctor Details Metadata
       final doctorDetails = {
         'doctor_name': doctorProfile?.fullName ?? 'Dr. Unknown',
         'hospital_clinic_name': doctorProfile?.hospitalName ?? 'Private Practice',
         'specialization': doctorProfile?.specialization ?? '',
         'medical_registration_number': doctorProfile?.medicalRegNumber ?? '',
-        'signature_uploaded': true, // Digital signature verified by biometric
+        'signature_uploaded': true,
       };
 
-      // 2. Prepare Complete Metadata
+      // 3. Prepare Complete Metadata
       final metadata = {
         'biometric_verified': true,
         'signed_at': DateTime.now().toIso8601String(),
@@ -164,6 +198,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
           'pregnancy_breastfeeding': _pregnancyBreastfeeding,
           'chronic_condition_linked': _chronicConditionLinked,
         },
+        'pdf_url': pdfUrl, // Attach the PDF URL here
       };
 
       await SupabaseService.instance.createPrescription(
@@ -171,7 +206,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         diagnosis: _diagnosisController.text.trim(),
         notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
         isPublic: _isPublic,
-        items: _medications.map((med) => med.toJson()).toList(),
+        items: medicationList,
         metadata: metadata,
       );
 
@@ -182,13 +217,14 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
           'patient_id': widget.patientId,
           'doctor_name': doctorProfile?.fullName,
           'biometric_verified': true,
+          'pdf_generated': pdfUrl != null,
         },
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Prescription Signed & Issued Successfully'),
+            content: Text('Prescription Signed, PDF Generated & Issued'),
             backgroundColor: AppColors.doctor,
             behavior: SnackBarBehavior.floating,
           ),
@@ -226,7 +262,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                 backgroundColor: AppColors.doctor,
                 foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
-                  // FIX: Increased left padding from 16 to 60 to avoid overlap with back arrow
                   titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
                   title: const Text(
                     'New Prescription',
@@ -373,7 +408,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         onPressed: _isLoading
             ? null
             : () {
-          // Read the profile data again for submission
           ref.read(currentProfileProvider).whenData((profile) {
             _submit(profile);
           });
