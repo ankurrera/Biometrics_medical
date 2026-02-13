@@ -12,6 +12,7 @@ class PdfService {
     required DateTime date,
     required String diagnosis,
     required List<Map<String, dynamic>> medications,
+    List<String>? tests, // NEW PARAMETER
     String? notes,
   }) async {
     final pdf = pw.Document();
@@ -132,6 +133,42 @@ class PdfService {
               },
             ),
             pw.SizedBox(height: 30),
+
+            // ──────────────── TESTS SECTION (NEW) ────────────────
+            if (tests != null && tests.isNotEmpty) ...[
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: pw.BorderRadius.circular(4),
+                  color: PdfColors.grey50,
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text('RECOMMENDED TESTS / INVESTIGATIONS:',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10, color: baseColor)),
+                    pw.SizedBox(height: 6),
+                    pw.Wrap(
+                      spacing: 10,
+                      runSpacing: 5,
+                      children: tests.map((test) =>
+                          pw.Container(
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: pw.BoxDecoration(
+                              border: pw.Border.all(color: baseColor, width: 0.5),
+                              borderRadius: pw.BorderRadius.circular(10),
+                            ),
+                            child: pw.Text(test, style: const pw.TextStyle(fontSize: 9)),
+                          )
+                      ).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 20),
+            ],
 
             // ──────────────── NOTES ────────────────
             if (notes != null && notes.isNotEmpty) ...[
