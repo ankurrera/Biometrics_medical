@@ -34,7 +34,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _diagnosisController = TextEditingController();
   final _notesController = TextEditingController();
-  final _testController = TextEditingController(); // NEW: Test input controller
+  final _testController = TextEditingController();
 
   bool _isPublic = false;
   bool _isLoading = false;
@@ -50,50 +50,76 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   bool? _chronicConditionLinked;
 
   final List<_MedicationEntry> _medications = [];
-  final List<String> _selectedTests = []; // NEW: List for selected tests
+  final List<String> _selectedTests = [];
 
-  // Mock Data for Autocomplete
-  final List<String> _commonDiagnoses = [
-    'Viral Fever', 'Hypertension', 'Type 2 Diabetes', 'Acute Bronchitis', 'Migraine', 'Gastritis'
-  ];
+  // DYNAMIC DATA
+  List<String> _availableTests = [];
+  List<String> _availableDiagnoses = [];
 
-  final List<String> _commonMedicines = [
-    'Paracetamol 500mg', 'Amoxicillin 500mg', 'Metformin 500mg', 'Cetirizine 10mg',
-    'Ibuprofen 400mg', 'Omeprazole 20mg', 'Azithromycin 500mg'
-  ];
+  // CHANGED: Medicines is now a List of Objects/Maps, not just strings
+  List<Map<String, dynamic>> _availableMedicines = [];
 
-  // NEW: Hardcoded list of common tests
-  final List<String> _commonTests = [
-    'Complete Blood Count (CBC)',
-    'Lipid Profile',
-    'HbA1c',
-    'Thyroid Profile (T3, T4, TSH)',
-    'Liver Function Test (LFT)',
-    'Kidney Function Test (KFT)',
-    'Urine Routine & Microscopy',
-    'Fasting Blood Sugar (FBS)',
-    'Post-Prandial Blood Sugar (PPBS)',
-    'X-Ray Chest PA View',
-    'Ultrasound Abdomen',
-    'MRI Brain',
-    'CT Scan',
-    'ECG',
-    'Vitamin D Total',
-    'Vitamin B12',
-    'Serum Electrolytes',
-    'Dengue NS1 Antigen',
-    'Widal Test (Typhoid)',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadMasterData();
+  }
 
   @override
   void dispose() {
     _diagnosisController.dispose();
     _notesController.dispose();
-    _testController.dispose(); // NEW
+    _testController.dispose();
     for (final med in _medications) {
       med.dispose();
     }
     super.dispose();
+  }
+
+  /// Fetch all master data
+  Future<void> _loadMasterData() async {
+    await Future.wait([
+      _fetchTableData('medical_tests', (data) => _availableTests = data),
+      _fetchTableData('medical_diagnoses', (data) => _availableDiagnoses = data),
+      _fetchMedicines(), // Specialized fetch for medicines
+    ]);
+  }
+
+  /// Generic fetch for simple name lists
+  Future<void> _fetchTableData(String tableName, Function(List<String>) onSuccess) async {
+    try {
+      final response = await SupabaseService.instance.client
+          .from(tableName)
+          .select('name')
+          .order('name')
+          .limit(1000);
+
+      if (mounted) {
+        setState(() {
+          onSuccess(List<String>.from(response.map((e) => e['name'] as String)));
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching $tableName: $e');
+    }
+  }
+
+  /// Specialized fetch for medicines to get name, dosage, and type
+  Future<void> _fetchMedicines() async {
+    try {
+      final response = await SupabaseService.instance.client
+          .from('medicines')
+          .select('name, dosage, type') // Fetch all fields
+          .limit(1000);
+
+      if (mounted) {
+        setState(() {
+          _availableMedicines = List<Map<String, dynamic>>.from(response);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching medicines: $e');
+    }
   }
 
   void _addMedication() {
@@ -109,7 +135,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     });
   }
 
-  // NEW: Test Management Methods
+  // Test Management Methods
   void _addTest(String testName) {
     if (testName.trim().isEmpty) return;
     if (!_selectedTests.contains(testName)) {
@@ -199,7 +225,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             diagnosis: _diagnosisController.text.trim(),
             notes: _notesController.text.trim(),
             medications: medicationList,
-            tests: _selectedTests, // NEW: Pass tests to PDF
+            tests: _selectedTests,
           );
 
           final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -232,7 +258,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         'prescription_date': _prescriptionDate.toIso8601String(),
         'valid_until': _validUntil.toIso8601String(),
         'type': _prescriptionType.name,
-        'recommended_tests': _selectedTests, // NEW: Save tests in metadata
+        'recommended_tests': _selectedTests,
         'doctor_details': doctorDetails,
         'safety_flags': {
           'allergies_mentioned': _allergiesMentioned,
@@ -354,7 +380,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
                     const SizedBox(height: 32),
 
-                    // 3. Recommended Tests (NEW SECTION)
+                    // 3. Recommended Tests (Optional)
                     _buildSectionHeader('Recommended Tests (Optional)'),
                     const SizedBox(height: 12),
                     _buildTestsSection(),
@@ -490,7 +516,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     return Text(title.toUpperCase(), style: _headerStyle);
   }
 
-  // NEW: Tests Section Widget
   Widget _buildTestsSection() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -501,7 +526,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
           Autocomplete<String>(
             optionsBuilder: (TextEditingValue textEditingValue) {
               if (textEditingValue.text == '') return const Iterable<String>.empty();
-              return _commonTests.where((String option) {
+              return _availableTests.where((String option) {
                 return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
               });
             },
@@ -600,7 +625,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     return Autocomplete<String>(
       optionsBuilder: (TextEditingValue textEditingValue) {
         if (textEditingValue.text == '') return const Iterable<String>.empty();
-        return _commonDiagnoses.where((String option) {
+        return _availableDiagnoses.where((String option) {
           return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
         });
       },
@@ -796,30 +821,90 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Medicine Name
-                Autocomplete<String>(
+                // MEDICINE SEARCH AUTOCOMPLETE (UPDATED)
+                Autocomplete<Map<String, dynamic>>(
                   optionsBuilder: (TextEditingValue val) {
-                    if (val.text == '') return const Iterable<String>.empty();
-                    return _commonMedicines.where((op) => op.toLowerCase().contains(val.text.toLowerCase()));
+                    if (val.text == '') return const Iterable<Map<String, dynamic>>.empty();
+                    // Filter based on medicine name
+                    return _availableMedicines.where((med) {
+                      final name = med['name'].toString().toLowerCase();
+                      final search = val.text.toLowerCase();
+                      return name.contains(search);
+                    });
                   },
-                  onSelected: (s) => med.nameController.text = s,
+                  // When selection is made, we want the field to show just the name
+                  displayStringForOption: (med) => med['name'],
+                  onSelected: (selection) {
+                    // Auto-fill logic
+                    med.nameController.text = selection['name'] ?? '';
+                    med.dosageController.text = selection['dosage'] ?? '';
+                    med.typeController.text = selection['type'] ?? ''; // New Type field
+                  },
+                  // Custom list item to show "Name Dosage - Type" in the dropdown
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        borderRadius: BorderRadius.circular(8),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 250, maxWidth: 300), // Limit width/height
+                          child: ListView.separated(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            separatorBuilder: (ctx, i) => const Divider(height: 1),
+                            itemBuilder: (BuildContext context, int index) {
+                              final option = options.elementAt(index);
+                              final name = option['name'];
+                              final dosage = option['dosage'] ?? '';
+                              final type = option['type'] ?? '';
+                              return ListTile(
+                                dense: true,
+                                title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                subtitle: Text('$dosage • $type', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                                onTap: () => onSelected(option),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                   fieldViewBuilder: (ctx, ctrl, focus, onComp) {
-                    ctrl.addListener(() => med.nameController.text = ctrl.text);
+                    // Sync controller manually if user types without selecting
+                    ctrl.addListener(() {
+                      if (ctrl.text != med.nameController.text) {
+                        med.nameController.text = ctrl.text;
+                      }
+                    });
                     return TextFormField(
                       controller: ctrl,
                       focusNode: focus,
-                      decoration: _inputDecoration(hint: 'Medicine Name (e.g. Paracetamol)', label: 'Medication'),
+                      decoration: _inputDecoration(
+                          hint: 'Search Medicine (e.g. Paracetamol)',
+                          label: 'Medicine Name'
+                      ),
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     );
                   },
                 ),
                 const SizedBox(height: 12),
 
-                // Grid for params
+                // Grid for Type, Dose, Freq
                 Row(
                   children: [
+                    // New Type Field
                     Expanded(
-                      flex: 3,
+                      flex: 2,
+                      child: TextFormField(
+                        controller: med.typeController,
+                        decoration: _inputDecoration(hint: 'Tab/Inj', label: 'Type'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
                       child: TextFormField(
                         controller: med.dosageController,
                         decoration: _inputDecoration(hint: '500mg', label: 'Dose'),
@@ -904,6 +989,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
 class _MedicationEntry {
   final nameController = TextEditingController();
+  final typeController = TextEditingController(); // ADDED
   final dosageController = TextEditingController();
   final frequencyController = TextEditingController();
   final durationController = TextEditingController();
@@ -912,6 +998,7 @@ class _MedicationEntry {
 
   void dispose() {
     nameController.dispose();
+    typeController.dispose();
     dosageController.dispose();
     frequencyController.dispose();
     durationController.dispose();
@@ -922,6 +1009,7 @@ class _MedicationEntry {
   Map<String, dynamic> toJson() {
     return {
       'medicine_name': nameController.text.trim(),
+      'type': typeController.text.trim(), // Added to JSON
       'dosage': dosageController.text.trim(),
       'frequency': frequencyController.text.trim(),
       'duration': durationController.text.trim().isNotEmpty
