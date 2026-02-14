@@ -161,6 +161,30 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 
+  /// NEW: Get prescriptions created by the current doctor in the last 3 days
+  Future<List<Map<String, dynamic>>> getDoctorRecentPrescriptions() async {
+    if (currentUserId == null) return [];
+
+    final threeDaysAgo = DateTime.now().subtract(const Duration(days: 3));
+
+    // We join 'patients' to get the patient reference,
+    // then nested join 'profiles' (via patient's user_id) to get the name.
+    final response = await client
+        .from('prescriptions')
+        .select('''
+          *,
+          patient:patients!patient_id(
+            user_id,
+            profiles:profiles!user_id(full_name)
+          )
+        ''')
+        .eq('doctor_id', currentUserId!)
+        .gte('created_at', threeDaysAgo.toIso8601String())
+        .order('created_at', ascending: false);
+
+    return List<Map<String, dynamic>>.from(response);
+  }
+
   Future<Map<String, dynamic>> createPrescription({
     required String patientId,
     required String diagnosis,
