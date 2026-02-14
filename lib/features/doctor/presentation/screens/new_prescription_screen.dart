@@ -55,8 +55,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   // DYNAMIC DATA
   List<String> _availableTests = [];
   List<String> _availableDiagnoses = [];
-
-  // CHANGED: Medicines is now a List of Objects/Maps, not just strings
   List<Map<String, dynamic>> _availableMedicines = [];
 
   @override
@@ -81,11 +79,10 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     await Future.wait([
       _fetchTableData('medical_tests', (data) => _availableTests = data),
       _fetchTableData('medical_diagnoses', (data) => _availableDiagnoses = data),
-      _fetchMedicines(), // Specialized fetch for medicines
+      _fetchMedicines(),
     ]);
   }
 
-  /// Generic fetch for simple name lists
   Future<void> _fetchTableData(String tableName, Function(List<String>) onSuccess) async {
     try {
       final response = await SupabaseService.instance.client
@@ -104,12 +101,11 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     }
   }
 
-  /// Specialized fetch for medicines to get name, dosage, and type
   Future<void> _fetchMedicines() async {
     try {
       final response = await SupabaseService.instance.client
           .from('medicines')
-          .select('name, dosage, type') // Fetch all fields
+          .select('name, dosage, type')
           .limit(1000);
 
       if (mounted) {
@@ -135,7 +131,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     });
   }
 
-  // Test Management Methods
   void _addTest(String testName) {
     if (testName.trim().isEmpty) return;
     if (!_selectedTests.contains(testName)) {
@@ -143,7 +138,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         _selectedTests.add(testName);
       });
     }
-    _testController.clear();
   }
 
   void _removeTest(String testName) {
@@ -213,7 +207,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     try {
       final medicationList = _medications.map((med) => med.toJson()).toList();
 
-      // 1. Generate & Upload PDF
       String? pdfUrl;
       try {
         if (doctorProfile != null) {
@@ -242,7 +235,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         debugPrint('PDF Generation Failed: $e');
       }
 
-      // 2. Prepare Doctor Details Metadata
       final doctorDetails = {
         'doctor_name': doctorProfile?.fullName ?? 'Dr. Unknown',
         'hospital_clinic_name': doctorProfile?.hospitalName ?? 'Private Practice',
@@ -251,7 +243,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         'signature_uploaded': true,
       };
 
-      // 3. Prepare Complete Metadata
       final metadata = {
         'biometric_verified': true,
         'signed_at': DateTime.now().toIso8601String(),
@@ -309,6 +300,51 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     }
   }
 
+  // --- REUSABLE DROPDOWN BUILDER ---
+  // Updated <T> to <T extends Object> to fix compilation error
+  Widget _customOptionsViewBuilder<T extends Object>(
+      BuildContext context,
+      AutocompleteOnSelected<T> onSelected,
+      Iterable<T> options,
+      double width,
+      Widget Function(T option) itemBuilder,
+      ) {
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Material(
+        elevation: 4.0,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(4)),
+        color: Colors.white,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 250),
+          child: SizedBox(
+            width: width, // FORCE width to match input field
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: options.length,
+              itemBuilder: (BuildContext context, int index) {
+                final T option = options.elementAt(index);
+                return InkWell(
+                  onTap: () => onSelected(option),
+                  child: itemBuilder(option),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper for standard list item padding
+  Widget _buildStandardDropdownItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Text(text, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUserAsync = ref.watch(currentProfileProvider);
@@ -344,17 +380,14 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Patient Header
                     _buildPatientInfoBar(),
                     const SizedBox(height: 24),
 
-                    // 1. Clinical Diagnosis
                     Text('Clinical Diagnosis'.toUpperCase(), style: _headerStyle),
                     const SizedBox(height: 8),
-                    _buildDiagnosisField(),
+                    _buildDiagnosisField(), // Uses reusable builder
                     const SizedBox(height: 24),
 
-                    // 2. Medications
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -380,14 +413,12 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
                     const SizedBox(height: 32),
 
-                    // 3. Recommended Tests (Optional)
                     _buildSectionHeader('Recommended Tests (Optional)'),
                     const SizedBox(height: 12),
-                    _buildTestsSection(),
+                    _buildTestsSection(), // Uses reusable builder
 
                     const SizedBox(height: 32),
 
-                    // 4. Details
                     _buildSectionHeader('Prescription Details'),
                     const SizedBox(height: 12),
                     Container(
@@ -404,7 +435,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
                     const SizedBox(height: 24),
 
-                    // 5. Notes
                     Text('Clinical Notes'.toUpperCase(), style: _headerStyle),
                     const SizedBox(height: 8),
                     TextFormField(
@@ -415,7 +445,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
                     const SizedBox(height: 24),
 
-                    // 6. Emergency Access Toggle
                     Container(
                       decoration: _cardDecoration,
                       child: SwitchListTile.adaptive(
@@ -491,7 +520,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
       hintText: hint,
       hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
       filled: true,
-      fillColor: const Color(0xFFF9FAFB), // Very light grey
+      fillColor: const Color(0xFFF9FAFB),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -523,36 +552,55 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Autocomplete<String>(
-            optionsBuilder: (TextEditingValue textEditingValue) {
-              if (textEditingValue.text == '') return const Iterable<String>.empty();
-              return _availableTests.where((String option) {
-                return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
-              });
-            },
-            onSelected: (String selection) {
-              _addTest(selection);
-            },
-            fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-              return TextField(
-                controller: controller,
-                focusNode: focusNode,
-                onSubmitted: (value) {
-                  _addTest(value);
-                  onEditingComplete();
-                },
-                decoration: _inputDecoration(
-                  hint: 'Search or type test name...',
-                  suffix: IconButton(
-                    icon: const Icon(Icons.add_circle, color: AppColors.doctor),
-                    onPressed: () {
-                      _addTest(controller.text);
-                      controller.clear();
-                    },
-                  ),
-                ),
-              );
-            },
+          // LayoutBuilder to capture exact width
+          LayoutBuilder(
+              builder: (context, constraints) {
+                return Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text == '') return const Iterable<String>.empty();
+                    return _availableTests.where((String option) {
+                      final matchesQuery = option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+                      final isNotAlreadySelected = !_selectedTests.contains(option);
+                      return matchesQuery && isNotAlreadySelected;
+                    });
+                  },
+                  displayStringForOption: (option) => '', // Keep field clear after select
+                  onSelected: (String selection) {
+                    _addTest(selection);
+                  },
+                  // Reusable Custom Builder
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return _customOptionsViewBuilder(
+                      context,
+                      onSelected,
+                      options,
+                      constraints.maxWidth,
+                          (option) => _buildStandardDropdownItem(option), // Standard look
+                    );
+                  },
+                  fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      onSubmitted: (value) {
+                        _addTest(value);
+                        controller.clear();
+                        onEditingComplete();
+                      },
+                      decoration: _inputDecoration(
+                        hint: 'Search or type test name...',
+                        suffix: IconButton(
+                          icon: const Icon(Icons.add_circle, color: AppColors.doctor),
+                          onPressed: () {
+                            _addTest(controller.text);
+                            controller.clear();
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
           ),
           if (_selectedTests.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -622,31 +670,45 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   }
 
   Widget _buildDiagnosisField() {
-    return Autocomplete<String>(
-      optionsBuilder: (TextEditingValue textEditingValue) {
-        if (textEditingValue.text == '') return const Iterable<String>.empty();
-        return _availableDiagnoses.where((String option) {
-          return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
-        });
-      },
-      onSelected: (String selection) {
-        _diagnosisController.text = selection;
-      },
-      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-        controller.addListener(() {
-          _diagnosisController.text = controller.text;
-        });
-        return TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          onEditingComplete: onEditingComplete,
-          decoration: _inputDecoration(
-            hint: 'Search ICD-10 or common diagnosis...',
-            suffix: const Icon(Icons.search, color: Colors.grey, size: 20),
-          ),
-          validator: (value) => value == null || value.isEmpty ? 'Diagnosis required' : null,
-        );
-      },
+    return LayoutBuilder(
+        builder: (context, constraints) {
+          return Autocomplete<String>(
+            optionsBuilder: (TextEditingValue textEditingValue) {
+              if (textEditingValue.text == '') return const Iterable<String>.empty();
+              return _availableDiagnoses.where((String option) {
+                return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+              });
+            },
+            onSelected: (String selection) {
+              _diagnosisController.text = selection;
+            },
+            // Reusable Custom Builder
+            optionsViewBuilder: (context, onSelected, options) {
+              return _customOptionsViewBuilder(
+                context,
+                onSelected,
+                options,
+                constraints.maxWidth,
+                    (option) => _buildStandardDropdownItem(option), // Standard look
+              );
+            },
+            fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+              controller.addListener(() {
+                _diagnosisController.text = controller.text;
+              });
+              return TextFormField(
+                controller: controller,
+                focusNode: focusNode,
+                onEditingComplete: onEditingComplete,
+                decoration: _inputDecoration(
+                  hint: 'Search ICD-10 or common diagnosis...',
+                  suffix: const Icon(Icons.search, color: Colors.grey, size: 20),
+                ),
+                validator: (value) => value == null || value.isEmpty ? 'Diagnosis required' : null,
+              );
+            },
+          );
+        }
     );
   }
 
@@ -794,7 +856,6 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Minimalist Header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 12, 0),
             child: Row(
@@ -822,72 +883,70 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             child: Column(
               children: [
                 // MEDICINE SEARCH AUTOCOMPLETE (UPDATED)
-                Autocomplete<Map<String, dynamic>>(
-                  optionsBuilder: (TextEditingValue val) {
-                    if (val.text == '') return const Iterable<Map<String, dynamic>>.empty();
-                    // Filter based on medicine name
-                    return _availableMedicines.where((med) {
-                      final name = med['name'].toString().toLowerCase();
-                      final search = val.text.toLowerCase();
-                      return name.contains(search);
-                    });
-                  },
-                  // When selection is made, we want the field to show just the name
-                  displayStringForOption: (med) => med['name'],
-                  onSelected: (selection) {
-                    // Auto-fill logic
-                    med.nameController.text = selection['name'] ?? '';
-                    med.dosageController.text = selection['dosage'] ?? '';
-                    med.typeController.text = selection['type'] ?? ''; // New Type field
-                  },
-                  // Custom list item to show "Name Dosage - Type" in the dropdown
-                  optionsViewBuilder: (context, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4.0,
-                        borderRadius: BorderRadius.circular(8),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 250, maxWidth: 300), // Limit width/height
-                          child: ListView.separated(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            itemCount: options.length,
-                            separatorBuilder: (ctx, i) => const Divider(height: 1),
-                            itemBuilder: (BuildContext context, int index) {
-                              final option = options.elementAt(index);
+                LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Autocomplete<Map<String, dynamic>>(
+                        optionsBuilder: (TextEditingValue val) {
+                          if (val.text == '') return const Iterable<Map<String, dynamic>>.empty();
+                          return _availableMedicines.where((med) {
+                            final name = med['name'].toString().toLowerCase();
+                            final search = val.text.toLowerCase();
+                            return name.contains(search);
+                          });
+                        },
+                        displayStringForOption: (med) => med['name'],
+                        onSelected: (selection) {
+                          med.nameController.text = selection['name'] ?? '';
+                          med.dosageController.text = selection['dosage'] ?? '';
+                          med.typeController.text = selection['type'] ?? '';
+                        },
+                        // Reusable Custom Builder with Custom Item
+                        optionsViewBuilder: (context, onSelected, options) {
+                          return _customOptionsViewBuilder(
+                            context,
+                            onSelected,
+                            options,
+                            constraints.maxWidth,
+                                (option) {
+                              // Custom item for medicine (with subtitle)
                               final name = option['name'];
                               final dosage = option['dosage'] ?? '';
                               final type = option['type'] ?? '';
-                              return ListTile(
-                                dense: true,
-                                title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                subtitle: Text('$dosage • $type', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                                onTap: () => onSelected(option),
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                                    if(dosage.isNotEmpty || type.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4.0),
+                                        child: Text('$dosage • $type', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                                      ),
+                                  ],
+                                ),
                               );
                             },
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  fieldViewBuilder: (ctx, ctrl, focus, onComp) {
-                    // Sync controller manually if user types without selecting
-                    ctrl.addListener(() {
-                      if (ctrl.text != med.nameController.text) {
-                        med.nameController.text = ctrl.text;
-                      }
-                    });
-                    return TextFormField(
-                      controller: ctrl,
-                      focusNode: focus,
-                      decoration: _inputDecoration(
-                          hint: 'Search Medicine (e.g. Paracetamol)',
-                          label: 'Medicine Name'
-                      ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
-                    );
-                  },
+                          );
+                        },
+                        fieldViewBuilder: (ctx, ctrl, focus, onComp) {
+                          ctrl.addListener(() {
+                            if (ctrl.text != med.nameController.text) {
+                              med.nameController.text = ctrl.text;
+                            }
+                          });
+                          return TextFormField(
+                            controller: ctrl,
+                            focusNode: focus,
+                            decoration: _inputDecoration(
+                                hint: 'Search Medicine (e.g. Paracetamol)',
+                                label: 'Medicine Name'
+                            ),
+                            validator: (v) => v!.isEmpty ? 'Required' : null,
+                          );
+                        },
+                      );
+                    }
                 ),
                 const SizedBox(height: 12),
 
