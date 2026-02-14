@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart'; // Ensure intl package is in pubspec.yaml
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -23,6 +24,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
 
+  // Patient Specific Controllers & State
+  final _weightController = TextEditingController();
+  String? _selectedGender;
+  DateTime? _selectedDateOfBirth;
+  final _dobController = TextEditingController(); // To show text in field
+
   // Doctor Specific Controllers
   final _hospitalController = TextEditingController();
   final _specializationController = TextEditingController();
@@ -40,6 +47,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _weightController.dispose();
+    _dobController.dispose();
     _hospitalController.dispose();
     _specializationController.dispose();
     _medRegController.dispose();
@@ -74,6 +83,33 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)), // Default to 18 years ago
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDateOfBirth) {
+      setState(() {
+        _selectedDateOfBirth = picked;
+        _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -90,6 +126,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         hospitalName: widget.role == 'doctor' ? _hospitalController.text.trim() : null,
         specialization: widget.role == 'doctor' ? _specializationController.text.trim() : null,
         medicalRegNumber: widget.role == 'doctor' ? _medRegController.text.trim() : null,
+        // Pass patient fields if role is patient
+        gender: widget.role == 'patient' ? _selectedGender : null,
+        dateOfBirth: widget.role == 'patient' ? _selectedDateOfBirth : null,
+        weight: widget.role == 'patient' && _weightController.text.isNotEmpty
+            ? double.tryParse(_weightController.text)
+            : null,
       );
 
       if (mounted) {
@@ -143,6 +185,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final isDoctor = widget.role == 'doctor';
+    final isPatient = widget.role == 'patient';
 
     return Scaffold(
       body: SafeArea(
@@ -251,6 +294,73 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+
+                // PATIENT SPECIFIC FIELDS
+                if (isPatient) ...[
+                  const Divider(height: 32),
+                  const Text(
+                    'Personal Details',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Gender Dropdown
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: 'Gender',
+                      prefixIcon: const Icon(Icons.people_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    value: _selectedGender,
+                    items: const [
+                      DropdownMenuItem(value: 'Male', child: Text('Male')),
+                      DropdownMenuItem(value: 'Female', child: Text('Female')),
+                      DropdownMenuItem(value: 'Other', child: Text('Other')),
+                    ],
+                    onChanged: (val) => setState(() => _selectedGender = val),
+                    validator: (val) => val == null ? 'Please select gender' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Date of Birth Picker
+                  GestureDetector(
+                    onTap: () => _selectDate(context),
+                    child: AbsorbPointer(
+                      child: AuthTextField(
+                        controller: _dobController,
+                        label: 'Date of Birth',
+                        hint: 'YYYY-MM-DD',
+                        prefixIcon: Icons.calendar_today_outlined,
+                        validator: (value) => value!.isEmpty ? 'Please enter date of birth' : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Weight Input
+                  AuthTextField(
+                    controller: _weightController,
+                    label: 'Weight (kg)',
+                    hint: 'e.g. 70.5',
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    prefixIcon: Icons.monitor_weight_outlined,
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        if (double.tryParse(value) == null) {
+                          return 'Invalid weight';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                  const Divider(height: 32),
+                ],
 
                 // DOCTOR SPECIFIC FIELDS
                 if (isDoctor) ...[

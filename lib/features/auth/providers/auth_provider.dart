@@ -10,12 +10,11 @@ import '../../../services/audit_service.dart';
 import '../../../services/auth_controller.dart';
 import '../../shared/models/user_profile.dart';
 
-/// Provider for auth state changes
+// ... Providers (authStateProvider, currentProfileProvider, etc.) remain unchanged ...
 final authStateProvider = StreamProvider<User?>((ref) {
   return SupabaseService.instance.authStateChanges.map((state) => state.session?.user);
 });
 
-/// Provider for current user profile
 final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final user = ref.watch(authStateProvider).valueOrNull;
   if (user == null) return null;
@@ -26,22 +25,18 @@ final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
   return UserProfile.fromJson(profileData);
 });
 
-/// Provider for biometric availability
 final biometricAvailableProvider = FutureProvider<bool>((ref) async {
   return await BiometricService.instance.isBiometricAvailable();
 });
 
-/// Provider for biometric type name
 final biometricTypeNameProvider = FutureProvider<String>((ref) async {
   return await BiometricService.instance.getBiometricTypeName();
 });
 
-/// Provider to check if biometric is enabled
 final biometricEnabledProvider = FutureProvider<bool>((ref) async {
   return await SecureStorageService.instance.isBiometricEnabled();
 });
 
-/// Provider for KYC status
 final kycStatusProvider = FutureProvider<KYCVerification?>((ref) async {
   return await KYCService.instance.getKYCStatus();
 });
@@ -66,11 +61,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     state = AsyncValue.data(_supabase.currentUser);
   }
 
-  /// Toggle Biometric Login
+  // ... toggleBiometric remains unchanged ...
   Future<void> toggleBiometric(bool enable) async {
     try {
       if (enable) {
-        // Verify identity before enabling
         final authenticated = await _biometric.authenticate(
           reason: 'Authenticate to enable biometric login',
           biometricOnly: true,
@@ -79,29 +73,28 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
           throw Exception('Biometric verification failed');
         }
       }
-
-      // 1. Update Storage
       await _storage.setBiometricEnabled(enable);
-
-      // 2. Force the UI providers to refresh immediately
       ref.invalidate(biometricEnabledProvider);
-
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Sign up with Doctor support
+  /// Sign up with Extended Patient & Doctor support
   Future<void> signUp({
     required String email,
     required String password,
     required String fullName,
     required String phone,
     required String role,
-    // Optional Doctor fields
+    // Doctor fields
     String? hospitalName,
     String? specialization,
     String? medicalRegNumber,
+    // New Patient fields
+    String? gender,
+    DateTime? dateOfBirth,
+    double? weight,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -123,16 +116,22 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         'phone': phone,
         'full_name': fullName,
         'role': role,
+        if (gender != null) 'gender': gender, // Add gender to profiles
         // Insert doctor specific fields if present
         if (hospitalName != null) 'hospital_clinic_name': hospitalName,
         if (specialization != null) 'specialization': specialization,
         if (medicalRegNumber != null) 'medical_registration_number': medicalRegNumber,
       });
 
-      await _createRoleRecord(role);
+      // Pass patient data to role record creation
+      await _createRoleRecord(
+        role,
+        dateOfBirth: dateOfBirth,
+        weight: weight,
+      );
+
       await _storage.setUserId(response.user!.id);
 
-      // FIX: Invalidate profile provider to fetch the newly added fields immediately
       ref.invalidate(currentProfileProvider);
 
       state = AsyncValue.data(response.user);
@@ -142,11 +141,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     }
   }
 
-  /// Sign in
-  Future<SignInResult> signIn({
-    required String email,
-    required String password,
-  }) async {
+  // ... signIn, signInWithBiometric, completeTwoFactor, enrollBiometric, signOut remain unchanged ...
+  Future<SignInResult> signIn({required String email, required String password}) async {
     state = const AsyncValue.loading();
     try {
       final response = await _supabase.signIn(email: email, password: password);
@@ -159,93 +155,64 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       }
       await _storage.setUserId(userId);
 
-      // Refresh biometric state on login
       ref.invalidate(biometricEnabledProvider);
-      // Refresh profile to ensure we have latest data
       ref.invalidate(currentProfileProvider);
 
       final isDeviceRegistered = await _deviceService.isDeviceRegistered();
       if (!isDeviceRegistered) {
         state = AsyncValue.data(response.user);
-        return SignInResult(
-            user: response.user,
-            requiresTwoFactor: true,
-            requiresKyc: false,
-            requiresBiometric: false,
-            email: email);
+        return SignInResult(user: response.user, requiresTwoFactor: true, requiresKyc: false, requiresBiometric: false, email: email);
       }
 
       final kycVerified = await _kycService.isKYCVerified(userId);
       if (!kycVerified) {
         state = AsyncValue.data(response.user);
-        return SignInResult(
-            user: response.user,
-            requiresTwoFactor: false,
-            requiresKyc: true,
-            requiresBiometric: false);
+        return SignInResult(user: response.user, requiresTwoFactor: false, requiresKyc: true, requiresBiometric: false);
       }
 
       await _deviceService.updateDeviceLastUsed();
       state = AsyncValue.data(response.user);
 
-      return SignInResult(
-          user: response.user,
-          requiresTwoFactor: false,
-          requiresKyc: false,
-          requiresBiometric: false);
+      return SignInResult(user: response.user, requiresTwoFactor: false, requiresKyc: false, requiresBiometric: false);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;
     }
   }
 
-  /// Sign in using Biometrics (Unlock Mode)
   Future<bool> signInWithBiometric() async {
     try {
       final isEnabled = await _storage.isBiometricEnabled();
       if (!isEnabled) return false;
-
-      final authenticated = await _biometric.authenticate(
-        reason: 'Authenticate to sign in',
-        biometricOnly: true,
-      );
-
+      final authenticated = await _biometric.authenticate(reason: 'Authenticate to sign in', biometricOnly: true);
       if (!authenticated) return false;
-
       final refreshToken = await _storage.getRefreshToken();
       if (refreshToken == null) return false;
-
       try {
         final response = await _supabase.auth.recoverSession(refreshToken);
         if (response.session == null) return false;
       } catch (e) {
         return false;
       }
-
       final deviceId = await _storage.getDeviceId();
       if (deviceId != null) {
         await _deviceService.updateDeviceLastUsed();
         await _auditService.logLogin(deviceId: deviceId, biometric: true);
       }
       await _storage.updateLastActivity();
-
       return true;
     } catch (e) {
       return false;
     }
   }
 
-  /// Complete Two-Factor
-  Future<void> completeTwoFactor({
-    required bool registerDevice,
-    required bool enableBiometric,
-  }) async {
+  Future<void> completeTwoFactor({required bool registerDevice, required bool enableBiometric}) async {
     try {
       if (registerDevice) {
         await _deviceService.registerDevice(biometricEnabled: enableBiometric);
         if (enableBiometric) {
           await _storage.setBiometricEnabled(true);
-          ref.invalidate(biometricEnabledProvider); // Refresh UI
+          ref.invalidate(biometricEnabledProvider);
         }
       }
       await _storage.updateLastActivity();
@@ -258,7 +225,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     try {
       await _authController.forceEnableBiometric();
       await _storage.setBiometricEnabled(true);
-      ref.invalidate(biometricEnabledProvider); // Refresh UI
+      ref.invalidate(biometricEnabledProvider);
     } catch (e) {
       rethrow;
     }
@@ -270,10 +237,19 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     state = const AsyncValue.data(null);
   }
 
-  Future<void> _createRoleRecord(String role) async {
+  Future<void> _createRoleRecord(
+      String role, {
+        DateTime? dateOfBirth,
+        double? weight,
+      }) async {
     switch (role) {
       case 'patient':
-        await _supabase.upsertPatientData({'qr_code_id': DateTime.now().millisecondsSinceEpoch.toString()});
+      // Add patient specific medical data here
+        await _supabase.upsertPatientData({
+          'qr_code_id': DateTime.now().millisecondsSinceEpoch.toString(),
+          if (dateOfBirth != null) 'date_of_birth': dateOfBirth.toIso8601String(),
+          if (weight != null) 'weight': weight,
+        });
         break;
       case 'doctor':
         await _supabase.client.from('doctors').upsert({'user_id': _supabase.currentUserId});
@@ -288,6 +264,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   }
 }
 
+// ... SignInResult and Provider definition remain unchanged ...
 class SignInResult {
   final User? user;
   final bool requiresTwoFactor;
@@ -304,7 +281,6 @@ class SignInResult {
   });
 }
 
-// Updated Provider Definition to pass 'ref'
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
   return AuthNotifier(ref);
 });

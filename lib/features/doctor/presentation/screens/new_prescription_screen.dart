@@ -1009,7 +1009,7 @@ class _MedicationEntry {
   Map<String, dynamic> toJson() {
     return {
       'medicine_name': nameController.text.trim(),
-      'type': typeController.text.trim(), // Added to JSON
+      'medicine_type': typeController.text.trim(), // Added to JSON
       'dosage': dosageController.text.trim(),
       'frequency': frequencyController.text.trim(),
       'duration': durationController.text.trim().isNotEmpty

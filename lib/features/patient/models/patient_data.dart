@@ -4,6 +4,7 @@ class PatientData {
   final String userId;
   final String? bloodType;
   final DateTime? dateOfBirth;
+  final double? weight; // Added
   final EmergencyContact? emergencyContact;
   final String qrCodeId;
   final DateTime createdAt;
@@ -14,6 +15,7 @@ class PatientData {
     required this.userId,
     this.bloodType,
     this.dateOfBirth,
+    this.weight, // Added
     this.emergencyContact,
     required this.qrCodeId,
     required this.createdAt,
@@ -28,9 +30,12 @@ class PatientData {
       dateOfBirth: json['date_of_birth'] != null
           ? DateTime.parse(json['date_of_birth'] as String)
           : null,
+      weight: json['weight'] != null
+          ? (json['weight'] as num).toDouble()
+          : null, // Added
       emergencyContact: json['emergency_contact'] != null
           ? EmergencyContact.fromJson(
-              json['emergency_contact'] as Map<String, dynamic>)
+          json['emergency_contact'] as Map<String, dynamic>)
           : null,
       qrCodeId: json['qr_code_id'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -46,6 +51,7 @@ class PatientData {
       'user_id': userId,
       'blood_type': bloodType,
       'date_of_birth': dateOfBirth?.toIso8601String(),
+      'weight': weight, // Added
       'emergency_contact': emergencyContact?.toJson(),
       'qr_code_id': qrCodeId,
       'created_at': createdAt.toIso8601String(),
@@ -65,7 +71,7 @@ class PatientData {
   }
 }
 
-/// Emergency contact information
+// ... EmergencyContact and MedicalCondition remain unchanged ...
 class EmergencyContact {
   final String name;
   final String phone;
@@ -94,7 +100,6 @@ class EmergencyContact {
   }
 }
 
-/// Medical condition model
 class MedicalCondition {
   final String id;
   final String patientId;
@@ -139,4 +144,3 @@ class MedicalCondition {
     }
   }
 }
-

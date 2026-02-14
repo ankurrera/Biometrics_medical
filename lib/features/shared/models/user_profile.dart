@@ -6,10 +6,11 @@ class UserProfile {
   final String fullName;
   final String role;
   final String? avatarUrl;
+  final String? gender; // Added
   final DateTime createdAt;
   final DateTime? updatedAt;
 
-  // Doctor Specific Fields (Added)
+  // Doctor Specific Fields
   final String? hospitalName;
   final String? specialization;
   final String? medicalRegNumber;
@@ -21,6 +22,7 @@ class UserProfile {
     required this.fullName,
     required this.role,
     this.avatarUrl,
+    this.gender, // Added
     required this.createdAt,
     this.updatedAt,
     this.hospitalName,
@@ -36,11 +38,11 @@ class UserProfile {
       fullName: json['full_name'] as String? ?? '',
       role: json['role'] as String? ?? 'patient',
       avatarUrl: json['avatar_url'] as String?,
+      gender: json['gender'] as String?, // Added
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : null,
-      // Map database columns to Dart properties
       hospitalName: json['hospital_clinic_name'] as String?,
       specialization: json['specialization'] as String?,
       medicalRegNumber: json['medical_registration_number'] as String?,
@@ -55,9 +57,9 @@ class UserProfile {
       'full_name': fullName,
       'role': role,
       'avatar_url': avatarUrl,
+      'gender': gender, // Added
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
-      // Include new fields in JSON
       'hospital_clinic_name': hospitalName,
       'specialization': specialization,
       'medical_registration_number': medicalRegNumber,
@@ -91,6 +93,7 @@ class UserProfile {
     String? fullName,
     String? role,
     String? avatarUrl,
+    String? gender, // Added
     DateTime? createdAt,
     DateTime? updatedAt,
     String? hospitalName,
@@ -104,6 +107,7 @@ class UserProfile {
       fullName: fullName ?? this.fullName,
       role: role ?? this.role,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      gender: gender ?? this.gender, // Added
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       hospitalName: hospitalName ?? this.hospitalName,
