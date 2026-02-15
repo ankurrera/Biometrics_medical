@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routing/route_names.dart';
@@ -13,53 +14,101 @@ class PatientDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // UPDATED: Watch activeContextProfileProvider to show the switched user's name
+    // Watch active profile
     final profile = ref.watch(activeContextProfileProvider);
+    final todayDate = DateFormat('EEEE, MMM d').format(DateTime.now());
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Slate 50 background
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Cleaner Header
-              DashboardHeader(
-                greeting: 'Good Morning,',
-                // Handle the AsyncValue properly
-                name: profile.valueOrNull?.fullName.split(' ').first ?? 'Patient',
-                subtitle: 'How are you feeling today?',
-                roleColor: AppColors.patient,
+              // ─────────────────────────────────────────────────────────────────
+              // 1. HEADER
+              // ─────────────────────────────────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        todayDate.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade500,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Hello, ${profile.valueOrNull?.fullName.split(' ').first ?? 'Patient'}',
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Profile Avatar / Settings Button
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.person_outline_rounded, color: AppColors.textPrimary),
+                      onPressed: () => context.push(RouteNames.patientPrivacy),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
 
-              // 2. "Glass" Style Emergency Banner
-              // Dribbble designs often use gradients + absolute positioning for illustrations
+              // ─────────────────────────────────────────────────────────────────
+              // 2. EMERGENCY / ID CARD
+              // ─────────────────────────────────────────────────────────────────
               Container(
                 width: double.infinity,
-                height: 180,
+                height: 160,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
-                    begin: Alignment.bottomLeft,
-                    end: Alignment.topRight,
+                    colors: [Color(0xFF0F766E), Color(0xFF2DD4BF)], // Teal Gradient
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.4),
+                      color: const Color(0xFF0F766E).withOpacity(0.3),
                       blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: Stack(
                   children: [
-                    // Decorative Circle
+                    // Decorative Curves
                     Positioned(
-                      top: -20,
-                      right: -20,
+                      right: -30,
+                      top: -30,
                       child: Container(
                         width: 150,
                         height: 150,
@@ -69,50 +118,58 @@ class PatientDashboardScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-
                     // Content
-                    Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text(
-                              'Medical ID',
-                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          const Spacer(),
-                          const Text(
-                            'Emergency\nQR Code',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              height: 1.1,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Tap to view details',
-                            style: TextStyle(color: Colors.white70, fontSize: 13),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Tap Area
                     Material(
                       color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(32),
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(32),
                         onTap: () => context.push(RouteNames.patientQrCode),
+                        borderRadius: BorderRadius.circular(28),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(Icons.qr_code_rounded, color: Colors.white, size: 20),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Medical ID Access',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              const Text(
+                                'Tap to show QR Code',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'For emergency responders',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -120,10 +177,16 @@ class PatientDashboardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
 
-              // 3. Modern Grid Actions
+              // ─────────────────────────────────────────────────────────────────
+              // 3. SERVICES GRID
+              // ─────────────────────────────────────────────────────────────────
               const Text(
                 'Services',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -133,34 +196,41 @@ class PatientDashboardScreen extends ConsumerWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
-                childAspectRatio: 1.1, // Slightly wider cards
+                childAspectRatio: 0.9,
                 children: [
-                  _buildModernActionCard(
-                    context,
-                    title: 'My\nPrescriptions',
-                    icon: Icons.medication_outlined,
-                    color: const Color(0xFF38BDF8), // Sky Blue
+                  // CARD 1: My Prescriptions (Blue)
+                  _buildPatientTile(
+                    title: 'My Rx',
+                    subtitle: 'View Active',
+                    icon: Icons.medication_rounded,
+                    themeColor: const Color(0xFF38BDF8),
                     onTap: () => context.push(RouteNames.patientPrescriptions),
                   ),
-                  _buildModernActionCard(
-                    context,
-                    title: 'Medical\nHistory',
+
+                  // CARD 2: Medical History (Purple)
+                  _buildPatientTile(
+                    title: 'History',
+                    subtitle: 'Past Records',
                     icon: Icons.history_rounded,
-                    color: const Color(0xFFA855F7), // Purple
+                    themeColor: const Color(0xFFA855F7),
                     onTap: () => context.push(RouteNames.patientMedicalHistory),
                   ),
-                  _buildModernActionCard(
-                    context,
-                    title: 'Add\nNew',
-                    icon: Icons.add_circle_outline_rounded,
-                    color: const Color(0xFFFB923C), // Orange
+
+                  // CARD 3: Add New (Orange)
+                  _buildPatientTile(
+                    title: 'New Rx',
+                    subtitle: 'Add Script',
+                    icon: Icons.add_rounded,
+                    themeColor: const Color(0xFFFB923C),
                     onTap: () => context.push(RouteNames.patientNewPrescription),
                   ),
-                  _buildModernActionCard(
-                    context,
-                    title: 'Privacy\nSettings',
-                    icon: Icons.shield_outlined,
-                    color: const Color(0xFF22C55E), // Green
+
+                  // CARD 4: Settings (Teal)
+                  _buildPatientTile(
+                    title: 'Privacy',
+                    subtitle: 'Manage Data',
+                    icon: Icons.security_rounded,
+                    themeColor: const Color(0xFF2DD4BF),
                     onTap: () => context.push(RouteNames.patientPrivacy),
                   ),
                 ],
@@ -172,56 +242,101 @@ class PatientDashboardScreen extends ConsumerWidget {
     );
   }
 
-  // A local widget helper for the "Dribbble-style" square cards
-  Widget _buildModernActionCard(
-      BuildContext context, {
-        required String title,
-        required IconData icon,
-        required Color color,
-        required VoidCallback onTap,
-      }) {
+  /// ───────────────────────────────────────────────────────────────────────
+  /// WIDGET: Patient Category Tile
+  /// STYLE: "Tinted Watermark" (Distinct from Doctor's "White Gradient")
+  /// ───────────────────────────────────────────────────────────────────────
+  Widget _buildPatientTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color themeColor,
+    required VoidCallback onTap,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        // DIFFERENCE 1: Tinted Background (instead of white)
+        color: themeColor.withOpacity(0.04),
+        // DIFFERENCE 2: Colored Border (instead of grey)
+        border: Border.all(color: themeColor.withOpacity(0.08)),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
+      clipBehavior: Clip.hardEdge,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                    color: AppColors.textPrimary,
+          child: Stack(
+            children: [
+              // DIFFERENCE 3: Large "Watermark" Icon in background
+              Positioned(
+                right: -15,
+                bottom: -15,
+                child: Transform.rotate(
+                  angle: -0.2,
+                  child: Icon(
+                    icon,
+                    size: 80, // Massive watermark
+                    color: themeColor.withOpacity(0.06),
                   ),
                 ),
-              ],
-            ),
+              ),
+
+              // Content
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Icon (Perfect Circle instead of Squircle)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle, // DIFFERENCE 4: Circle shape
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        icon,
+                        color: themeColor,
+                        size: 24,
+                      ),
+                    ),
+
+                    // Text
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

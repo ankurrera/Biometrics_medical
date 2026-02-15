@@ -110,7 +110,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
 
                   SizedBox(
-                    height: 140, // Increased slightly for the new clean layout
+                    height: 140, // Consistent height for cards
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       clipBehavior: Clip.none,
@@ -140,8 +140,9 @@ class DoctorDashboardScreen extends ConsumerWidget {
                           title: 'History',
                           subtitle: 'View Logs',
                           icon: Icons.history_rounded,
-                          primaryColor: AppColors.secondary,
-                          secondaryColor: const Color(0xFFFFD700), // Gold Accent
+                          // FIX: Changed to Grey palette to match standard history icons
+                          primaryColor: Colors.blueGrey,
+                          secondaryColor: Colors.grey.shade400,
                           onTap: () => context.push(RouteNames.doctorHistory),
                         ),
                       ],
@@ -474,7 +475,8 @@ class DoctorDashboardScreen extends ConsumerWidget {
         required VoidCallback onTap,
       }) {
     return Container(
-      width: 130, // Fixed width for consistency
+      width: 130,
+      clipBehavior: Clip.hardEdge, // Essential for clean rounded corners
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -496,11 +498,11 @@ class DoctorDashboardScreen extends ConsumerWidget {
             children: [
               // Decorative Gradient Shape (Top Right)
               Positioned(
-                right: -15,
-                top: -15,
+                right: -25,
+                top: -25,
                 child: Container(
-                  width: 60,
-                  height: 60,
+                  width: 100, // Large consistent size
+                  height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -526,7 +528,12 @@ class DoctorDashboardScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
+                        // FIX: alphaBlend creates a SOLID opaque color that looks like a tint.
+                        // This prevents the background gradient from showing through and creating a dark overlap.
+                        color: Color.alphaBlend(
+                            primaryColor.withOpacity(0.1),
+                            Colors.white
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
