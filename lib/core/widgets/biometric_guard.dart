@@ -68,8 +68,7 @@ class _BiometricGuardState extends State<BiometricGuard> with WidgetsBindingObse
       // If enabled, we MUST authenticate
       await _authenticate();
     } else {
-      // If disabled, we just let them in (BUT this means if toggle is broken, security is broken)
-      // Since we fixed the toggle, this will now correctly reflect your choice.
+      // If disabled, we just let them in
       if (mounted) setState(() => _isAuthenticated = true);
       widget.onAuthenticated?.call();
     }

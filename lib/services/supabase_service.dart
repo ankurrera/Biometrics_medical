@@ -71,11 +71,18 @@ class SupabaseService {
   // PATIENT OPERATIONS
   // ─────────────────────────────────────────────────────────────────────────
 
+  // ... inside SupabaseService class ...
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PATIENT OPERATIONS
+  // ─────────────────────────────────────────────────────────────────────────
+
   Future<Map<String, dynamic>?> getPatientData({String? userId}) async {
     final targetId = userId ?? currentUserId;
     if (targetId == null) return null;
 
     try {
+      // FIX: Changed 'patient_data' to 'patients'
       var response = await client
           .from('patients')
           .select()
@@ -84,12 +91,14 @@ class SupabaseService {
 
       if (response == null) {
         try {
+          // FIX: Changed 'patient_data' to 'patients'
           response = await client
               .from('patients')
               .insert({'user_id': targetId})
               .select()
               .single();
         } catch (insertError) {
+          // FIX: Changed 'patient_data' to 'patients'
           response = await client
               .from('patients')
               .select()
@@ -104,15 +113,11 @@ class SupabaseService {
     }
   }
 
-  Future<String?> ensurePatientExists() async {
-    final data = await getPatientData();
-    return data?['id'] as String?;
-  }
-
   Future<void> upsertPatientData(Map<String, dynamic> data, {String? userId}) async {
     final targetId = userId ?? currentUserId;
     if (targetId == null) return;
 
+    // FIX: Changed 'patient_data' to 'patients'
     await client.from('patients').upsert({
       'user_id': targetId,
       ...data,
