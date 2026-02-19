@@ -101,7 +101,7 @@ class DashboardHeader extends ConsumerWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: roleColor.withOpacity(0.1),
+              color: roleColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16), // Rounded square (Modern trend)
               image: profile.valueOrNull?.avatarUrl != null
                   ? DecorationImage(

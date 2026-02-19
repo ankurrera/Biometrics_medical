@@ -21,7 +21,7 @@ class RoleSelectionScreen extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               isDark 
-                  ? AppColors.primary.withOpacity(0.15) 
+                  ? AppColors.primary.withValues(alpha: 0.15) 
                   : AppColors.primarySurface,
               Theme.of(context).scaffoldBackgroundColor,
             ],
@@ -77,7 +77,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   'Select your role to get started',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 32),

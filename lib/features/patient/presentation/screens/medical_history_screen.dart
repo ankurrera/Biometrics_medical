@@ -41,7 +41,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
                     Icon(
                       Icons.verified_user_outlined,
                       size: 80,
-                      color: AppColors.warning.withOpacity(0.5),
+                      color: AppColors.warning.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 24),
                     const Text(
@@ -57,7 +57,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -89,14 +89,14 @@ class MedicalHistoryScreen extends ConsumerWidget {
                   Icon(
                     Icons.error_outline,
                     size: 64,
-                    color: AppColors.error.withOpacity(0.5),
+                    color: AppColors.error.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Error loading medical history',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -136,7 +136,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
             Icon(
               Icons.medical_information_outlined,
               size: 80,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 24),
             Text(
@@ -144,7 +144,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 8),
@@ -153,7 +153,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
             const SizedBox(height: 24),
@@ -186,7 +186,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _getTypeColor(type).withOpacity(0.1),
+                    color: _getTypeColor(type).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -203,7 +203,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getSeverityColor(severity).withOpacity(0.1),
+                      color: _getSeverityColor(severity).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -238,7 +238,7 @@ class MedicalHistoryScreen extends ConsumerWidget {
                   isPublic ? 'Visible to first responders' : 'Private',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
                 const Spacer(),

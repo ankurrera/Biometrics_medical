@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/biometric_guard.dart';
 import '../../../../services/supabase_service.dart';
 import '../../../../services/audit_service.dart';
@@ -42,7 +41,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   // Metadata Fields
   DateTime _prescriptionDate = DateTime.now();
   DateTime _validUntil = DateTime.now().add(const Duration(days: 30));
-  PrescriptionType _prescriptionType = PrescriptionType.newPrescription;
+  final PrescriptionType _prescriptionType = PrescriptionType.newPrescription;
 
   // Safety Flags
   bool? _allergiesMentioned;
@@ -398,7 +397,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                           label: const Text('Add Drug'),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.doctor,
-                            backgroundColor: AppColors.doctor.withOpacity(0.1),
+                            backgroundColor: AppColors.doctor.withValues(alpha: 0.1),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -452,7 +451,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                         subtitle: const Text('Allow first responders to view via QR', style: TextStyle(fontSize: 13, color: Colors.grey)),
                         value: _isPublic,
                         onChanged: (v) => setState(() => _isPublic = v),
-                        activeColor: AppColors.doctor,
+                        activeTrackColor: AppColors.doctor,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       ),
                     ),
@@ -470,7 +469,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               )
@@ -610,8 +609,8 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
               children: _selectedTests.map((test) {
                 return Chip(
                   label: Text(test, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                  backgroundColor: AppColors.doctor.withOpacity(0.05),
-                  side: BorderSide(color: AppColors.doctor.withOpacity(0.2)),
+                  backgroundColor: AppColors.doctor.withValues(alpha: 0.05),
+                  side: BorderSide(color: AppColors.doctor.withValues(alpha: 0.2)),
                   deleteIcon: const Icon(Icons.close, size: 16, color: AppColors.doctor),
                   onDeleted: () => _removeTest(test),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -637,7 +636,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.doctor.withOpacity(0.1),
+              color: AppColors.doctor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -768,7 +767,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                  color: isAlert ? AppColors.warning.withOpacity(0.5) : Colors.grey.shade200
+                  color: isAlert ? AppColors.warning.withValues(alpha: 0.5) : Colors.grey.shade200
               ),
             ),
             child: Row(
@@ -860,7 +859,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 12, 0),
             child: Row(
               children: [
-                Icon(Icons.circle, size: 8, color: AppColors.doctor.withOpacity(0.5)),
+                Icon(Icons.circle, size: 8, color: AppColors.doctor.withValues(alpha: 0.5)),
                 const SizedBox(width: 8),
                 Text('Drug ${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary)),
                 const Spacer(),

@@ -88,7 +88,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: AppColors.error.withOpacity(0.5),
+                color: AppColors.error.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 16),
               Text('Error: $error'),
@@ -110,9 +110,9 @@ class PrivacySettingsScreen extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.info.withOpacity(0.1),
+                    color: AppColors.info.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.info.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -123,7 +123,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
                           'Control what information is visible when your emergency QR code is scanned by first responders.',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
@@ -255,7 +255,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
                 Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: AppColors.error.withOpacity(0.3)),
+                    side: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
                   ),
                   child: ListTile(
                     leading: Icon(Icons.qr_code, color: AppColors.error),
@@ -284,7 +284,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -304,7 +304,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -339,7 +339,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: (isPublic ? AppColors.success : AppColors.warning).withOpacity(0.1),
+                color: (isPublic ? AppColors.success : AppColors.warning).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

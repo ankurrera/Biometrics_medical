@@ -52,7 +52,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: AppColors.error.withOpacity(0.5),
+                color: AppColors.error.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 16),
               Text('Error: $error'),
@@ -99,7 +99,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.pharmacist.withOpacity(0.1),
+                            color: AppColors.pharmacist.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -119,7 +119,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.5),
+                                .withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -150,7 +150,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: AppColors.patient.withOpacity(0.1),
+                                    color: AppColors.patient.withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -178,7 +178,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface
-                                              .withOpacity(0.5),
+                                              .withValues(alpha: 0.5),
                                         ),
                                       ),
                                     ],
@@ -187,7 +187,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.success.withOpacity(0.1),
+                                    color: AppColors.success.withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -212,7 +212,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurface
-                                        .withOpacity(0.5),
+                                        .withValues(alpha: 0.5),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -223,7 +223,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurface
-                                            .withOpacity(0.7),
+                                            .withValues(alpha: 0.7),
                                       ),
                                     ),
                                   ),
@@ -243,7 +243,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.pharmacist.withOpacity(0.1),
+                                      color: AppColors.pharmacist.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -270,7 +270,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onSurface
-                                      .withOpacity(0.5),
+                                      .withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
@@ -298,7 +298,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
             Icon(
               Icons.inventory_2_outlined,
               size: 80,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 24),
             Text(
@@ -306,7 +306,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 8),
@@ -315,7 +315,7 @@ class DispensingHistoryScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
           ],

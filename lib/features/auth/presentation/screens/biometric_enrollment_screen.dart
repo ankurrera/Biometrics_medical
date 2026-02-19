@@ -38,7 +38,6 @@ class _BiometricEnrollmentScreenState
   }
 
   Future<void> _checkAndEnrollBiometric() async {
-    print('[BIO] Auto-triggering biometric setup (mandatory)');
     await _enrollBiometric();
   }
 
@@ -49,11 +48,10 @@ class _BiometricEnrollmentScreenState
     });
 
     try {
-      print('[BIO] Starting enrollment');
+      // print('[BIO] Starting enrollment');
       
       // KYC check - use robust method
       if (!widget.isMandatory) {
-        print('[BIO] Checking KYC status (optional enrollment)');
         final session = ref.read(authStateProvider).valueOrNull;
         if (session == null) {
           if (mounted) {
@@ -69,7 +67,6 @@ class _BiometricEnrollmentScreenState
         
         final kycService = KYCService.instance;
         final kycVerified = await kycService.isKYCVerified(session.id);
-        print('[BIO] KYC verified = $kycVerified');
         
         if (!kycVerified) {
           if (mounted) {
@@ -85,10 +82,9 @@ class _BiometricEnrollmentScreenState
         }
       }
 
-      print('[BIO] Calling enrollBiometric()');
+      // print('[BIO] Calling enrollBiometric()');
       await ref.read(authNotifierProvider.notifier).enrollBiometric();
 
-      print('[BIO] Enrollment successful');
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -100,7 +96,7 @@ class _BiometricEnrollmentScreenState
         _navigateToDashboard();
       }
     } catch (e) {
-      print('[BIO] Enrollment failed: $e');
+      // print('[BIO] Enrollment failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -178,13 +174,13 @@ class _BiometricEnrollmentScreenState
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primary.withOpacity(0.15),
-                      AppColors.primaryLight.withOpacity(0.1),
+                      AppColors.primary.withValues(alpha: 0.15),
+                      AppColors.primaryLight.withValues(alpha: 0.1),
                     ],
                   ),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     width: 2,
                   ),
                 ),
@@ -241,7 +237,7 @@ class _BiometricEnrollmentScreenState
                 style: TextStyle(
                   fontSize: 15,
                   color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   height: 1.5,
                 ),
               ),
@@ -253,7 +249,7 @@ class _BiometricEnrollmentScreenState
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -384,7 +380,7 @@ class _BiometricEnrollmentScreenState
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -410,7 +406,7 @@ class _BiometricEnrollmentScreenState
                 style: TextStyle(
                   fontSize: 13,
                   color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],

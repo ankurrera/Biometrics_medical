@@ -1,4 +1,4 @@
-import 'dart:typed_data'; // Added for Uint8List
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Singleton service for Supabase database operations
@@ -146,7 +146,7 @@ class SupabaseService {
       final publicUrl = client.storage.from(bucket).getPublicUrl(path);
       return publicUrl;
     } catch (e) {
-      print('Storage Upload Error: $e');
+      debugPrint('Error uploading file: $e');
       return null;
     }
   }

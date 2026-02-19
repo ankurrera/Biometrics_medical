@@ -8,7 +8,6 @@ class FamilyService {
 
   /// Send a connection request by email
   Future<void> sendFamilyRequest(String email, String label) async {
-    print('[FamilyService] Sending request to: $email');
     try {
       final response = await _supabase.rpc('send_family_request', params: {
         'target_email': email.trim(),
@@ -19,7 +18,6 @@ class FamilyService {
         throw Exception(response['message'] ?? 'Failed to send request');
       }
     } catch (e) {
-      print('[FamilyService] Error sending request: $e');
       rethrow;
     }
   }
@@ -54,7 +52,6 @@ class FamilyService {
       }).whereType<FamilyMember>().toList();
 
     } catch (e) {
-      print('[FamilyService] Error fetching members: $e');
       return [];
     }
   }
@@ -76,7 +73,6 @@ class FamilyService {
           .map((e) => FamilyRequest.fromJson(e))
           .toList();
     } catch (e) {
-      print('[FamilyService] Error fetching incoming requests: $e');
       return [];
     }
   }
@@ -104,7 +100,6 @@ class FamilyService {
       ))
           .toList();
     } catch (e) {
-      print('[FamilyService] Error fetching outgoing requests: $e');
       return [];
     }
   }

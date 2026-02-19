@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'device_service.dart';
+
 import 'kyc_service.dart';
 import 'secure_storage_service.dart';
 import 'biometric_service.dart';
@@ -14,7 +14,7 @@ class AuthController {
   static final AuthController instance = AuthController._();
 
   final _supabase = Supabase.instance.client;
-  final _deviceService = DeviceService.instance;
+
   final _kycService = KYCService.instance;
   final _storage = SecureStorageService.instance;
   final _biometric = BiometricService.instance;

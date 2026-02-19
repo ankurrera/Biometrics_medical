@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service for logging audit trails
@@ -40,7 +41,7 @@ class AuditService {
       // In production, use proper logging framework
       // ignore: avoid_print
       assert(() {
-        print('Failed to log audit action: $e');
+        debugPrint('Failed to log audit action: $e');
         return true;
       }());
     }

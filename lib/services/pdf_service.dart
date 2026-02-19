@@ -101,7 +101,7 @@ class PdfService {
             pw.SizedBox(height: 10),
 
             // Medications Table
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               headers: ['Medicine', 'Dosage', 'Frequency', 'Duration', 'Instructions'],
               data: medications.map((med) {
                 return [

@@ -59,16 +59,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     switch (result) {
       case SessionRestoreResult.success:
-        print('[AUTH] Session restored - navigating to dashboard');
+        // Session restored - navigating to dashboard
         _navigateToDashboard();
         break;
       case SessionRestoreResult.biometricFailed:
-        print('[AUTH] Biometric authentication failed');
+        // Biometric authentication failed
         // Show error and go to login
         context.go(RouteNames.roleSelection);
         break;
       case SessionRestoreResult.loginRequired:
-        print('[AUTH] Login required');
+        // Login required
         context.go(RouteNames.roleSelection);
         break;
     }
@@ -133,7 +133,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -164,7 +164,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             fontFamily: 'Outfit',
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                           ),
                         ),
                         const SizedBox(height: 48),
@@ -175,7 +175,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white.withOpacity(0.8),
+                              Colors.white.withValues(alpha: 0.8),
                             ),
                           ),
                         ),

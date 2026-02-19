@@ -321,16 +321,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             Text(
               'This account is registered as:',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: actualRoleColor.withOpacity(0.1),
+                color: actualRoleColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: actualRoleColor.withOpacity(0.3)),
+                border: Border.all(color: actualRoleColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -352,7 +352,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               'You selected "$_roleTitle" but your account is registered as "$actualRoleTitle". '
               'Please go back and select the correct role.',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -453,10 +453,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: _roleColor.withOpacity(0.1),
+                    color: _roleColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: _roleColor.withOpacity(0.3),
+                      color: _roleColor.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
@@ -466,7 +466,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: _roleColor.withOpacity(0.2),
+                          color: _roleColor.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                   ),
                         child: Icon(
@@ -484,7 +484,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                               'Signing in as',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: _roleColor.withOpacity(0.8),
+                                color: _roleColor.withValues(alpha: 0.8),
                               ),
                             ),
                             Text(
@@ -526,7 +526,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.6),
+                        .withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -631,7 +631,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurface
-                                    .withOpacity(0.2),
+                                    .withValues(alpha: 0.2),
                               ),
                             ),
                             Padding(
@@ -642,7 +642,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onSurface
-                                      .withOpacity(0.5),
+                                      .withValues(alpha: 0.5),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -652,7 +652,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurface
-                                    .withOpacity(0.2),
+                                    .withValues(alpha: 0.2),
                               ),
                             ),
                           ],
@@ -679,7 +679,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               side: BorderSide(
-                                color: _roleColor.withOpacity(0.5),
+                                color: _roleColor.withValues(alpha: 0.5),
                                 width: 2,
                               ),
                               foregroundColor: _roleColor,
@@ -701,7 +701,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
-                            .withOpacity(0.6),
+                            .withValues(alpha: 0.6),
                       ),
                     ),
                     TextButton(

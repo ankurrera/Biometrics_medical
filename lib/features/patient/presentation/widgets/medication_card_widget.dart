@@ -144,7 +144,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -157,7 +157,7 @@ class _MedicationCardWidgetState extends State<MedicationCardWidget> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.pharmacist.withOpacity(0.1),
+                  color: AppColors.pharmacist.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(

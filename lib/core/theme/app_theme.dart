@@ -71,7 +71,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 4,
-          shadowColor: AppColors.primary.withOpacity(0.4),
+          shadowColor: AppColors.primary.withValues(alpha: 0.4),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(0, 56),
@@ -126,7 +126,7 @@ class AppTheme {
         color: const Color(0xFF1E293B), // Slate 800
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: Colors.white.withOpacity(0.05)),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
       ),
 

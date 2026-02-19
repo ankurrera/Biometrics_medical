@@ -321,7 +321,7 @@ class _PatientLookupScreenState extends ConsumerState<PatientLookupScreen>
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -508,7 +508,7 @@ class _PatientQrScannerState extends State<_PatientQrScanner> {
         // Overlay mask
         ColorFiltered(
           colorFilter: ColorFilter.mode(
-            Colors.black.withOpacity(0.5),
+            Colors.black.withValues(alpha: 0.5),
             BlendMode.srcOut,
           ),
           child: Stack(
@@ -546,7 +546,7 @@ class _PatientQrScannerState extends State<_PatientQrScanner> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 12,
                     spreadRadius: 2,
                   )
@@ -565,7 +565,7 @@ class _PatientQrScannerState extends State<_PatientQrScanner> {
                 vertical: 12,
               ),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(30),
               ),
               child: const Row(

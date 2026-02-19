@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'biometric_service.dart';
 import 'audit_service.dart';
@@ -97,7 +98,7 @@ class EmergencyAccessService {
     );
 
     assert(() {
-      print('[EMERGENCY] Emergency access granted: $accessId');
+      debugPrint('[EMERGENCY] Emergency access granted: $accessId');
       return true;
     }());
 
@@ -124,7 +125,7 @@ class EmergencyAccessService {
       return result != null;
     } catch (e) {
       assert(() {
-        print('[EMERGENCY] Error checking access: $e');
+        debugPrint('[EMERGENCY] Error checking access: $e');
         return true;
       }());
       return false;
@@ -152,7 +153,7 @@ class EmergencyAccessService {
     );
 
     assert(() {
-      print('[EMERGENCY] Emergency access revoked: $accessId');
+      debugPrint('[EMERGENCY] Emergency access revoked: $accessId');
       return true;
     }());
   }
@@ -171,7 +172,7 @@ class EmergencyAccessService {
         .lt('expires_at', now);
 
     assert(() {
-      print('[EMERGENCY] Expired emergency access records revoked');
+      debugPrint('[EMERGENCY] Expired emergency access records revoked');
       return true;
     }());
   }
@@ -197,7 +198,7 @@ class EmergencyAccessService {
           .toList();
     } catch (e) {
       assert(() {
-        print('[EMERGENCY] Error fetching access records: $e');
+        debugPrint('[EMERGENCY] Error fetching access records: $e');
         return true;
       }());
       return [];
@@ -222,7 +223,7 @@ class EmergencyAccessService {
           .toList();
     } catch (e) {
       assert(() {
-        print('[EMERGENCY] Error fetching access history: $e');
+        debugPrint('[EMERGENCY] Error fetching access history: $e');
         return true;
       }());
       return [];
@@ -240,7 +241,7 @@ class EmergencyAccessService {
     // - In-app notification
 
     assert(() {
-      print('[EMERGENCY] Patient notification hook called for patient: $patientId');
+      debugPrint('[EMERGENCY] Patient notification hook called for patient: $patientId');
       return true;
     }());
 

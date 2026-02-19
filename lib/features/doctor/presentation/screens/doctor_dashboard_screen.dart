@@ -53,7 +53,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.05),
+                    color: AppColors.primary.withValues(alpha: 0.05),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                   ),
@@ -188,7 +188,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.02),
+                                  color: Colors.black.withValues(alpha: 0.02),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -197,7 +197,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               leading: CircleAvatar(
-                                backgroundColor: AppColors.doctor.withOpacity(0.1),
+                                backgroundColor: AppColors.doctor.withValues(alpha: 0.1),
                                 child: Text(
                                   patientName.isNotEmpty ? patientName[0].toUpperCase() : '?',
                                   style: const TextStyle(
@@ -261,7 +261,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
         border: Border.all(color: Colors.white),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -311,7 +311,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.doctor.withOpacity(0.3),
+                  color: AppColors.doctor.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -377,7 +377,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
         border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -395,8 +395,8 @@ class DoctorDashboardScreen extends ConsumerWidget {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    primaryColor.withOpacity(0.15),
-                    secondaryColor.withOpacity(0.05),
+                    primaryColor.withValues(alpha: 0.15),
+                    secondaryColor.withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
@@ -415,7 +415,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
+                        color: primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(icon, color: primaryColor, size: 20),
@@ -483,7 +483,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
         border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -507,8 +507,8 @@ class DoctorDashboardScreen extends ConsumerWidget {
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        primaryColor.withOpacity(0.15),
-                        secondaryColor.withOpacity(0.05),
+                        primaryColor.withValues(alpha: 0.15),
+                        secondaryColor.withValues(alpha: 0.05),
                       ],
                       begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
@@ -531,7 +531,7 @@ class DoctorDashboardScreen extends ConsumerWidget {
                         // FIX: alphaBlend creates a SOLID opaque color that looks like a tint.
                         // This prevents the background gradient from showing through and creating a dark overlap.
                         color: Color.alphaBlend(
-                            primaryColor.withOpacity(0.1),
+                            primaryColor.withValues(alpha: 0.1),
                             Colors.white
                         ),
                         borderRadius: BorderRadius.circular(12),

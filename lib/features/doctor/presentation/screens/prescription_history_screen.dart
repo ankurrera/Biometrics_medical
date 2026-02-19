@@ -49,7 +49,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: AppColors.error.withOpacity(0.5),
+                color: AppColors.error.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 16),
               Text('Error: $error'),
@@ -95,7 +95,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: AppColors.patient.withOpacity(0.1),
+                                  color: AppColors.patient.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -122,7 +122,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurface
-                                            .withOpacity(0.5),
+                                            .withValues(alpha: 0.5),
                                       ),
                                     ),
                                   ],
@@ -137,7 +137,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: AppColors.info.withOpacity(0.1),
+                                        color: AppColors.info.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Text(
@@ -161,7 +161,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                             width: double.infinity,
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.doctor.withOpacity(0.05),
+                              color: AppColors.doctor.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Column(
@@ -172,7 +172,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.doctor.withOpacity(0.7),
+                                    color: AppColors.doctor.withValues(alpha: 0.7),
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -198,7 +198,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurface
-                                    .withOpacity(0.6),
+                                    .withValues(alpha: 0.6),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -214,13 +214,13 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isDispensed
-                                        ? AppColors.success.withOpacity(0.1)
-                                        : AppColors.pharmacist.withOpacity(0.1),
+                                        ? AppColors.success.withValues(alpha: 0.1)
+                                        : AppColors.pharmacist.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: isDispensed
-                                          ? AppColors.success.withOpacity(0.3)
-                                          : AppColors.pharmacist.withOpacity(0.3),
+                                          ? AppColors.success.withValues(alpha: 0.3)
+                                          : AppColors.pharmacist.withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Row(
@@ -262,7 +262,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onSurface
-                                      .withOpacity(0.5),
+                                      .withValues(alpha: 0.5),
                                 ),
                                 const SizedBox(width: 6),
                                 Expanded(
@@ -274,7 +274,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onSurface
-                                          .withOpacity(0.6),
+                                          .withValues(alpha: 0.6),
                                     ),
                                   ),
                                 ),
@@ -308,7 +308,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                                 : Theme.of(context)
                                     .colorScheme
                                     .onSurface
-                                    .withOpacity(0.4),
+                                    .withValues(alpha: 0.4),
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -320,7 +320,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurface
-                                  .withOpacity(0.5),
+                                  .withValues(alpha: 0.5),
                             ),
                           ),
                         ],
@@ -346,7 +346,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
             Icon(
               Icons.description_outlined,
               size: 80,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 24),
             Text(
@@ -354,7 +354,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 8),
@@ -363,7 +363,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
           ],
@@ -393,7 +393,7 @@ class PrescriptionHistoryScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

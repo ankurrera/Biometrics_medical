@@ -137,8 +137,8 @@ class _PrescriptionUploadWidgetState extends State<PrescriptionUploadWidget> {
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(
           color: hasFile
-              ? AppColors.success.withOpacity(0.5)
-              : AppColors.error.withOpacity(0.5),
+              ? AppColors.success.withValues(alpha: 0.5)
+              : AppColors.error.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
@@ -151,8 +151,8 @@ class _PrescriptionUploadWidgetState extends State<PrescriptionUploadWidget> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: hasFile 
-                      ? AppColors.success.withOpacity(0.1)
-                      : AppColors.error.withOpacity(0.1),
+                      ? AppColors.success.withValues(alpha: 0.1)
+                      : AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
                 child: Icon(
@@ -197,7 +197,7 @@ class _PrescriptionUploadWidgetState extends State<PrescriptionUploadWidget> {
                   Icon(
                     Icons.cloud_upload_outlined,
                     size: 48,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   ElevatedButton.icon(
@@ -227,10 +227,10 @@ class _PrescriptionUploadWidgetState extends State<PrescriptionUploadWidget> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.05),
+                color: AppColors.success.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 border: Border.all(
-                  color: AppColors.success.withOpacity(0.2),
+                  color: AppColors.success.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -301,7 +301,7 @@ class _PrescriptionUploadWidgetState extends State<PrescriptionUploadWidget> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.info.withOpacity(0.1),
+                color: AppColors.info.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
               ),
               child: Row(

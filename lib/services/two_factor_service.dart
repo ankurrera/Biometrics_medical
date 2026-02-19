@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service for handling Two-Factor Authentication (2FA)
@@ -70,7 +71,7 @@ class TwoFactorService {
     // For development, log the code (REMOVE IN PRODUCTION)
     // ignore: avoid_print
     assert(() {
-      print('📧 2FA Code for $email: $code');
+      debugPrint('📧 2FA Code for $email: $code');
       return true;
     }());
     
@@ -127,7 +128,7 @@ class TwoFactorService {
     // For development, log the code (REMOVE IN PRODUCTION)
     // ignore: avoid_print
     assert(() {
-      print('📱 2FA Code for $phoneNumber: $code');
+      debugPrint('📱 2FA Code for $phoneNumber: $code');
       return true;
     }());
     
@@ -240,7 +241,7 @@ class TwoFactorService {
       // In production, use proper logging framework
       // ignore: avoid_print
       assert(() {
-        print('Failed to cleanup expired codes: $e');
+        debugPrint('Failed to cleanup expired codes: $e');
         return true;
       }());
     }

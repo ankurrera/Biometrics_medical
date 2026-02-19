@@ -1,7 +1,5 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
@@ -9,7 +7,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/config/env_config.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/biometric_guard.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
@@ -68,7 +65,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
 
                   // Construct the emergency URL
                   // In a real app, this ID would be encrypted or a one-time token
-                  final qrData = patient.qrCodeId ?? 'CS-${profile.id.substring(0, 8).toUpperCase()}';
+                  final qrData = patient.qrCodeId;
                   final qrUrl = '${EnvConfig.emergencyBaseUrl}/$qrData';
 
                   return Column(
@@ -86,7 +83,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                               },
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+                                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -161,12 +158,12 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 30,
             offset: const Offset(0, 15),
           ),
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -196,9 +193,9 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
                     ),
                     child: const Icon(Icons.medical_services_rounded, color: Colors.white, size: 26),
                   ),
@@ -244,7 +241,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                   child: Icon(
                     Icons.qr_code_2,
                     size: 300,
-                    color: Colors.grey.withOpacity(0.03),
+                    color: Colors.grey.withValues(alpha: 0.03),
                   ),
                 ),
 
@@ -348,7 +345,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                           border: Border.all(color: AppColors.border, width: 1.5),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -392,7 +389,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primaryDark.withOpacity(0.8),
+                      color: AppColors.primaryDark.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -433,7 +430,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
     return Container(
       height: 30,
       width: 1,
-      color: Colors.grey.withOpacity(0.2),
+      color: Colors.grey.withValues(alpha: 0.2),
     );
   }
 
@@ -443,7 +440,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFECFDF5), // Green 50
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF34D399).withOpacity(0.3)),
+        border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.3)),
       ),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,

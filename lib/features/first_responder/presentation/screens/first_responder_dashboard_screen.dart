@@ -53,13 +53,13 @@ class FirstResponderDashboardScreen extends ConsumerWidget {
                               end: Alignment.bottomRight,
                               colors: [
                                 AppColors.firstResponder,
-                                AppColors.firstResponder.withOpacity(0.8),
+                                AppColors.firstResponder.withValues(alpha: 0.8),
                               ],
                             ),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.firstResponder.withOpacity(0.4),
+                                color: AppColors.firstResponder.withValues(alpha: 0.4),
                                 blurRadius: 30,
                                 offset: const Offset(0, 10),
                               ),
@@ -96,7 +96,7 @@ class FirstResponderDashboardScreen extends ConsumerWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .onSurface
-                              .withOpacity(0.6),
+                              .withValues(alpha: 0.6),
                           height: 1.5,
                         ),
                       ),
@@ -121,7 +121,7 @@ class FirstResponderDashboardScreen extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -129,7 +129,7 @@ class FirstResponderDashboardScreen extends ConsumerWidget {
                     Icon(
                       Icons.history_rounded,
                       size: 32,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -140,7 +140,7 @@ class FirstResponderDashboardScreen extends ConsumerWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .onSurface
-                              .withOpacity(0.6),
+                              .withValues(alpha: 0.6),
                         ),
                       ),
                     ),

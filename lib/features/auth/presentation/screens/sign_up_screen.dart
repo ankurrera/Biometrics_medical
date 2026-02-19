@@ -212,7 +212,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _roleColor.withOpacity(0.15),
+                    color: _roleColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -243,7 +243,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.6),
+                        .withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -485,7 +485,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
-                            .withOpacity(0.6),
+                            .withValues(alpha: 0.6),
                       ),
                     ),
                     TextButton(

@@ -105,7 +105,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
@@ -131,7 +131,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 class _ScannerOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.5);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.5);
     const windowSize = 280.0;
     final left = (size.width - windowSize) / 2;
     final top = (size.height - windowSize) / 2 - 50;

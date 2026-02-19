@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'biometric_service.dart';
@@ -50,7 +50,7 @@ class EncryptionService {
     );
 
     assert(() {
-      print('[ENCRYPTION] Encryption key initialized');
+      debugPrint('[ENCRYPTION] Encryption key initialized');
       return true;
     }());
   }
@@ -64,7 +64,7 @@ class EncryptionService {
     final initialized = await isKeyInitialized();
     if (!initialized) {
       assert(() {
-        print('[ENCRYPTION] Encryption key not initialized');
+        debugPrint('[ENCRYPTION] Encryption key not initialized');
         return true;
       }());
       return null;
@@ -153,7 +153,7 @@ class EncryptionService {
     await _storage.delete(key: _keyInitializedKey);
 
     assert(() {
-      print('[ENCRYPTION] Encryption key cleared');
+      debugPrint('[ENCRYPTION] Encryption key cleared');
       return true;
     }());
   }

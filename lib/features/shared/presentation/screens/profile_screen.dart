@@ -40,7 +40,7 @@ class ProfileScreen extends ConsumerWidget {
               width: 350,
               height: 350,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
+                color: AppColors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
             ),
@@ -182,7 +182,7 @@ class ProfileScreen extends ConsumerWidget {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),
-                                  side: BorderSide(color: AppColors.primary.withOpacity(0.5)),
+                                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
                                 ),
                                 icon: const Icon(Icons.swap_horiz_rounded),
                                 label: const Text('Switch Account'),
@@ -209,7 +209,7 @@ class ProfileScreen extends ConsumerWidget {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                              border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
                             ),
                             child: Column(
                               children: [
@@ -282,12 +282,12 @@ class ProfileScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadow.withOpacity(0.05),
+            color: AppColors.shadow.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(color: AppColors.doctor.withOpacity(0.2)),
+        border: Border.all(color: AppColors.doctor.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +297,7 @@ class ProfileScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.doctor.withOpacity(0.1),
+                  color: AppColors.doctor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.medical_services_rounded, color: AppColors.doctor, size: 20),
@@ -442,7 +442,7 @@ class ProfileScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -463,7 +463,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
           TextButton.icon(
             onPressed: () => ref.read(familyControllerProvider.notifier).switchAccount(null),
-            style: TextButton.styleFrom(foregroundColor: Colors.white, backgroundColor: Colors.white.withOpacity(0.2)),
+            style: TextButton.styleFrom(foregroundColor: Colors.white, backgroundColor: Colors.white.withValues(alpha: 0.2)),
             icon: const Icon(Icons.close, size: 16),
             label: const Text('Exit'),
           ),
@@ -484,7 +484,7 @@ class ProfileScreen extends ConsumerWidget {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.2),
+                color: AppColors.primary.withValues(alpha: 0.2),
                 blurRadius: 30,
                 offset: const Offset(0, 10),
               ),
@@ -526,7 +526,7 @@ class ProfileScreen extends ConsumerWidget {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.shadow.withOpacity(0.06),
+                color: AppColors.shadow.withValues(alpha: 0.06),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -627,17 +627,17 @@ class ProfileScreen extends ConsumerWidget {
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isDestructive ? AppColors.error.withOpacity(0.1) : AppColors.backgroundLight,
+              color: isDestructive ? AppColors.error.withValues(alpha: 0.1) : AppColors.backgroundLight,
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 20, color: isDestructive ? AppColors.error : AppColors.textPrimary),
           ),
           title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: isDestructive ? AppColors.error : AppColors.textPrimary)),
           trailing: isToggle
-              ? Switch.adaptive(value: toggleValue, activeColor: AppColors.primary, onChanged: onToggle)
+              ? Switch.adaptive(value: toggleValue, activeTrackColor: AppColors.primary, onChanged: onToggle)
               : const Icon(Icons.chevron_right_rounded, color: AppColors.textLight),
         ),
-        if (!isDestructive) Divider(height: 1, indent: 70, color: AppColors.border.withOpacity(0.3)),
+        if (!isDestructive) Divider(height: 1, indent: 70, color: AppColors.border.withValues(alpha: 0.3)),
       ],
     );
   }

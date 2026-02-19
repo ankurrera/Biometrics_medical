@@ -126,10 +126,10 @@ class _PatientNewPrescriptionScreenState
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.08),
+                  color: AppColors.warning.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.warning.withOpacity(0.4),
+                    color: AppColors.warning.withValues(alpha: 0.4),
                   ),
                 ),
                 child: Row(
@@ -145,7 +145,7 @@ class _PatientNewPrescriptionScreenState
                           color: Theme.of(context)
                               .colorScheme
                               .onSurface
-                              .withOpacity(0.7),
+                              .withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -161,7 +161,7 @@ class _PatientNewPrescriptionScreenState
                         title: Text(p.fullName.isNotEmpty ? p.fullName : 'You'),
                         subtitle: const Text('Patient'),
                         tileColor:
-                            AppColors.patient.withOpacity(0.08),
+                            AppColors.patient.withValues(alpha: 0.08),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -240,7 +240,7 @@ class _PatientNewPrescriptionScreenState
                       color: Theme.of(context)
                           .colorScheme
                           .outline
-                          .withOpacity(0.3),
+                          .withValues(alpha: 0.3),
                     ),
                   ),
                   child: Column(
@@ -251,7 +251,7 @@ class _PatientNewPrescriptionScreenState
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -260,7 +260,7 @@ class _PatientNewPrescriptionScreenState
                           color: Theme.of(context)
                               .colorScheme
                               .onSurface
-                              .withOpacity(0.5),
+                              .withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -281,7 +281,7 @@ class _PatientNewPrescriptionScreenState
                     color: Theme.of(context)
                         .colorScheme
                         .outline
-                        .withOpacity(0.3),
+                        .withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -308,7 +308,7 @@ class _PatientNewPrescriptionScreenState
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurface
-                                  .withOpacity(0.6),
+                                  .withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -317,7 +317,7 @@ class _PatientNewPrescriptionScreenState
                     Switch(
                       value: _isPublic,
                       onChanged: (value) => setState(() => _isPublic = value),
-                      activeColor: AppColors.primary,
+                      activeTrackColor: AppColors.primary,
                     ),
                   ],
                 ),
@@ -354,7 +354,7 @@ class _PatientNewPrescriptionScreenState
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -365,7 +365,7 @@ class _PatientNewPrescriptionScreenState
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.pharmacist.withOpacity(0.1),
+                  color: AppColors.pharmacist.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(

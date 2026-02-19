@@ -2,26 +2,48 @@ import 'package:flutter/material.dart';
 
 abstract class AppColors {
   // ─────────────────────────────────────────────────────────────────────────
-  // MODERN BRAND COLORS (Soft UI / Dribbble Style)
+  // SOFT UI / PASTEL PALETTE (Reference Design)
   // ─────────────────────────────────────────────────────────────────────────
-  static const Color primary = Color(0xFF14B8A6);        // Teal 500
-  static const Color primaryLight = Color(0xFF5EEAD4);   // Teal 300
-  static const Color primaryDark = Color(0xFF0F766E);    // Teal 700
-  static const Color primarySurface = Color(0xFFF0FDFA); // Teal 50
+  static const Color softPrimary = Color(0xFF8B5CF6);    // Main Purple
+  static const Color softPrimaryLight = Color(0xFFA78BFA); // Lighter Purple
+  static const Color softBackground = Color(0xFFF8F9FE); // Very light blue-grey tint
+  
+  static const Color softSurface = Colors.white;
+  
+  // Feature Colors
+  static const Color softPurple = Color(0xFFEBE4FF);     // Light Purple background
+  static const Color softBlue = Color(0xFFE0F2FE);       // Light Blue background
+  static const Color softPink = Color(0xFFFEE2E2);       // Light Pink background
+  static const Color softYellow = Color(0xFFFEF3C7);     // Light Yellow background
+
+  static const Color textMain = Color(0xFF1E293B);       // Dark Slate
+  static const Color textSub = Color(0xFF64748B);        // Muted Slate
+
+  static const Color borderSoft = Color(0xFFF1F5F9);
+  
+  static const Color shadowSoft = Color(0xFFE2E8F0);     // Light shadow
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // COMPATIBILITY ALIASES (Mapping Old -> New Theme)
+  // ─────────────────────────────────────────────────────────────────────────
+  static const Color primary = softPrimary;              // Was Teal, now Purple
+  static const Color primaryLight = softPrimaryLight;    // Was Teal 300, now Lighter Purple
+  static const Color primaryDark = Color(0xFF7C3AED);    // Violet 600 (Darker than softPrimary)
+  static const Color primarySurface = softPurple;        // Was Teal 50, now Light Purple bg
 
   // ─────────────────────────────────────────────────────────────────────────
   // NEUTRALS & SURFACES
   // ─────────────────────────────────────────────────────────────────────────
-  static const Color backgroundLight = Color(0xFFF8FAFC);   // Slate 50
-  static const Color surfaceLight = Color(0xFFFFFFFF);      // Pure White
-  static const Color surfaceVariant = Color(0xFFF1F5F9);    // Slate 100
+  static const Color backgroundLight = softBackground;   // Map active bg to soft
+  static const Color surfaceLight = Colors.white;
+  static const Color surfaceVariant = Color(0xFFF1F5F9);
 
-  static const Color textPrimary = Color(0xFF1E293B);       // Slate 800
-  static const Color textSecondary = Color(0xFF64748B);     // Slate 500
-  static const Color textLight = Color(0xFF94A3B8);         // Slate 400
+  static const Color textPrimary = textMain;
+  static const Color textSecondary = textSub;
+  static const Color textLight = Color(0xFF94A3B8);
 
-  static const Color border = Color(0xFFE2E8F0);            // Slate 200
-  static const Color shadow = Color(0xFF64748B);            // For custom shadows
+  static const Color border = borderSoft;
+  static const Color shadow = shadowSoft;
 
   // ─────────────────────────────────────────────────────────────────────────
   // LEGACY ALIASES & ROLE COLORS (Restored for Compatibility)

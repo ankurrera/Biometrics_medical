@@ -78,6 +78,7 @@ class _EmergencyAccessScreenState extends ConsumerState<EmergencyAccessScreen> {
           accessId,
         );
 
+        if (!mounted) return;
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -201,7 +202,7 @@ class _EmergencyAccessScreenState extends ConsumerState<EmergencyAccessScreen> {
               decoration: BoxDecoration(
                 color: AppColors.errorLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +254,7 @@ class _EmergencyAccessScreenState extends ConsumerState<EmergencyAccessScreen> {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -262,7 +263,7 @@ class _EmergencyAccessScreenState extends ConsumerState<EmergencyAccessScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppColors.patient.withOpacity(0.1),
+                      color: AppColors.patient.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -289,7 +290,7 @@ class _EmergencyAccessScreenState extends ConsumerState<EmergencyAccessScreen> {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.6),
+                                .withValues(alpha: 0.6),
                           ),
                         ),
                       ],

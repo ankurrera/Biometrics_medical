@@ -1,5 +1,5 @@
-/// Enhanced models for comprehensive prescription input
-/// These models support the full patient-input prescription workflow
+// Enhanced models for comprehensive prescription input
+// These models support the full patient-input prescription workflow
 
 import 'package:uuid/uuid.dart';
 
@@ -69,6 +69,23 @@ class DoctorDetails {
       'medical_registration_number': medicalRegistrationNumber,
       'signature_uploaded': signatureUploaded,
     };
+  }
+
+  DoctorDetails copyWith({
+    String? doctorName,
+    String? specialization,
+    String? hospitalClinicName,
+    String? medicalRegistrationNumber,
+    bool? signatureUploaded,
+  }) {
+    return DoctorDetails(
+      doctorName: doctorName ?? this.doctorName,
+      specialization: specialization ?? this.specialization,
+      hospitalClinicName: hospitalClinicName ?? this.hospitalClinicName,
+      medicalRegistrationNumber:
+          medicalRegistrationNumber ?? this.medicalRegistrationNumber,
+      signatureUploaded: signatureUploaded ?? this.signatureUploaded,
+    );
   }
 
   bool get isValid {

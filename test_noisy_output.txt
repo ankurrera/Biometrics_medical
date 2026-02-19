@@ -1,0 +1,146 @@
+Resolving dependencies...
+Downloading packages...
+  _fe_analyzer_shared 85.0.0 (95.0.0 available)
+  analyzer 7.6.0 (10.1.0 available)
+  analyzer_plugin 0.13.4 (0.14.3 available)
+  app_links 6.4.1 (7.0.0 available)
+  archive 4.0.7 (4.0.9 available)
+  build 2.5.4 (4.0.4 available)
+  build_config 1.1.2 (1.2.0 available)
+  build_resolvers 2.5.4 (3.0.4 available)
+  build_runner 2.5.4 (2.11.1 available)
+  build_runner_core 9.1.2 (9.3.2 available)
+  characters 1.4.0 (1.4.1 available)
+  custom_lint_core 0.7.5 (0.8.2 available)
+  custom_lint_visitor 1.0.0+7.7.0 (1.0.0+9.0.0 available)
+  dart_style 3.1.1 (3.1.5 available)
+  ffi 2.1.5 (2.2.0 available)
+  flutter_dotenv 5.2.1 (6.0.0 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_riverpod 2.6.1 (3.2.1 available)
+  flutter_secure_storage 9.2.4 (10.0.0 available)
+  flutter_secure_storage_linux 1.2.3 (3.0.0 available)
+  flutter_secure_storage_macos 3.1.3 (4.0.0 available)
+  flutter_secure_storage_platform_interface 1.1.2 (2.0.1 available)
+  flutter_secure_storage_web 1.2.1 (2.1.0 available)
+  flutter_secure_storage_windows 3.1.2 (4.1.0 available)
+  freezed 2.5.8 (3.2.5 available)
+  freezed_annotation 2.4.4 (3.1.0 available)
+  go_router 14.8.1 (17.1.0 available)
+  google_fonts 6.3.3 (8.0.2 available)
+  google_maps_flutter_android 2.18.12 (2.19.1 available)
+  google_maps_flutter_web 0.5.14+3 (0.6.1 available)
+  image 4.5.4 (4.8.0 available)
+  js 0.6.7 (0.7.2 available)
+  json_annotation 4.9.0 (4.10.0 available)
+  json_serializable 6.9.5 (6.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  local_auth 2.3.0 (3.0.0 available)
+  local_auth_android 1.0.56 (2.0.4 available)
+  local_auth_darwin 1.6.1 (2.0.2 available)
+  local_auth_windows 1.0.11 (2.0.1 available)
+  matcher 0.12.17 (0.12.18 available)
+  material_color_utilities 0.11.1 (0.13.0 available)
+  meta 1.17.0 (1.18.1 available)
+  mgrs_dart 2.0.0 (3.0.0 available)
+  mobile_scanner 6.0.11 (7.2.0 available)
+  objective_c 9.2.5 (9.3.0 available)
+  petitparser 7.0.1 (7.0.2 available)
+  proj4dart 2.1.0 (3.0.0 available)
+  reactive_forms 17.0.1 (18.2.2 available)
+  riverpod 2.6.1 (3.2.1 available)
+  riverpod_analyzer_utils 0.5.9 (0.5.10 available)
+  riverpod_annotation 2.6.1 (4.0.2 available)
+  riverpod_generator 2.6.4 (4.0.3 available)
+  share_plus 10.1.4 (12.0.1 available)
+  share_plus_platform_interface 5.0.2 (6.1.0 available)
+  source_gen 2.0.0 (4.2.0 available)
+  source_helper 1.3.7 (1.3.10 available)
+  source_span 1.10.1 (1.10.2 available)
+  test_api 0.7.7 (0.7.9 available)
+  unicode 0.3.1 (1.1.9 available)
+  url_launcher_ios 6.3.6 (6.4.1 available)
+  vector_graphics_compiler 1.1.20 (1.2.0 available)
+Got dependencies!
+61 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:01 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:02 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:03 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:03 +0: OCR Extraction Logic                                                                                                                                                                         00:03 +0: OCR Extraction Logic                                                                                                                                                                         
+--- RAW OCR TEXT START ---
+Apollo 24|7
+Dr. Pawan Yelgulwar
+MBBS
+General Practitioner
+Reg.No. 2004010051
+
+Apollo 24|7 Virtual Clinic, Apollo Hospitals, Sandhya Elite
+Nursing, Hyderabad, Telangana, 500032
+
+Patient
+Sheetal Fagna, Female, 23 Yrs
+Date: Friday, 10 May 2024
+Time: 5:21 PM
+Consult Type: Online
+Appointment ID: 12504403
+
+Diagnosis/ Provisional Diagnosis
+• Retrocalcaneal bursitis/Plantar Fasciitis?
+
+Medication Prescribed
+
+1. PAN 40 TABLET 15'S 1-0-0-0 TABLET | Once a day 15 days
+Contains: PANTOPRAZOLE (40 MG) M-N-E-N Orally. Before food
+Take medication 30 minutes before break fast
+
+2. SUPRADYN DAILY MULTIVITAMIN TABLET 15'S 1-0-0-0 TABLET | Once a day 15 days
+M-N-E-N Orally. After food
+
+3. HIFENAC SR TABLET 10'S 1-0-0-0 TABLET | Once a day 15 days
+Contains: ACECLOFENAC (200 MG) M-N-E-N Orally. After food
+
+4. VOLINI PAIN RELIEF GEL, 75 GM -----1----- DROP | Twice a day 7 days
+Contains: DICLOFENAC SODIUM (1.16 %W/W) + LINSEED OIL (3 Local application
+
+M-N-E-N: Morning - Noon - Evening - Night Note: Medicine Substitution Allowed Wherever Applicable.
+
+--- RAW OCR TEXT END ---
+--- OCR RESULT ---
+Doctor: Pawan Yelgulwar
+Hospital: Apollo 24|7
+Date: 2024-05-10 00:00:00.000
+Diagnosis: Retrocalcaneal bursitis/Plantar Fasciitis?
+Medications Found: 3
+  - Name: PAN 40 TABLET 15'S
+    Dosage: 
+    Freq: 1-0-0-0
+    Duration: 15 days
+    Quantity: 15
+    Instructions: TABLET  Once a day
+
+  - Name: SUPRADYN DAILY MULTIVITAMIN TABLET 15'S
+    Dosage: 
+    Freq: 1-0-0-0
+    Duration: 15 days
+    Quantity: 15
+    Instructions: TABLET  Once a day
+
+  - Name: HIFENAC SR TABLET 10'S
+    Dosage: 
+    Freq: 1-0-0-0
+    Duration: 15 days
+    Quantity: 15
+    Instructions: TABLET  Once a day
+
+00:03 +1: OCR Extraction Logic                                                                                                                                                                         00:03 +1: OCR Extraction Logic - Noisy Data                                                                                                                                                            00:03 +1: OCR Extraction Logic - Noisy Data                                                                                                                                                            
+--- RAW OCR TEXT START ---
+    1. PAN 40 TABLET 15'S 1 - 0 - 0 - 0 TABLET | Once a day 15 days
+    2. SUPRADYN DAILY   1- 0- 0- 0   Tab.
+    3. HIFENAC SR 1.0.0.0 (Dot separator)
+    4. HALF DOSE 0.5 - 0 - 0.5 (Decimals with dash)
+    
+--- RAW OCR TEXT END ---
+--- NOISY OCR RESULT ---
+Captured: PAN 40 TABLET 15'S | 1 - 0 - 0 - 0 | Qty: 15
+Captured: SUPRADYN DAILY | 1- 0- 0- 0 | Qty: 0
+Captured: HIFENAC SR | 1.0.0.0 | Qty: 0
+Captured: HALF DOSE | 0.5 - 0 - 0.5 | Qty: 0
+00:03 +2: OCR Extraction Logic - Noisy Data                                                                                                                                                            00:03 +2: All tests passed!                                                                                                                                                                            

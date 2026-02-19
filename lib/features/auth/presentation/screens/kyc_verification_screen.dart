@@ -290,7 +290,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Column(
@@ -457,7 +457,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                   height: 60,
                   decoration: BoxDecoration(
                     color: hasDocument
-                        ? AppColors.success.withOpacity(0.1)
+                        ? AppColors.success.withValues(alpha: 0.1)
                         : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(8),
                   ),

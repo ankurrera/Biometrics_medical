@@ -73,245 +73,98 @@ class _DoctorInfoCardWidgetState extends State<DoctorInfoCardWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final showRegistrationWarning = _regNumberController.text.trim().isEmpty;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(
-          color: showRegistrationWarning 
-              ? AppColors.warning.withOpacity(0.5)
-              : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Doctor Name *
+        TextFormField(
+          controller: _doctorNameController,
+          decoration: _inputDecoration(
+            'Dr. Full Name',
+            'Doctor Name *',
+            Icons.person_outline,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) return 'Doctor name is required';
+            // Simple check for placeholders
+            final lower = value.trim().toLowerCase();
+            if (['test', 'placeholder', 'na', 'n/a'].contains(lower)) {
+              return 'Enter a valid name';
+            }
+            return null;
+          },
         ),
+        const SizedBox(height: 16),
+
+        // Specialization
+        TextFormField(
+          controller: _specializationController,
+           decoration: _inputDecoration(
+            'e.g. Cardiologist',
+            'Specialization',
+            Icons.work_outline,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Hospital/Clinic Name *
+        TextFormField(
+          controller: _hospitalController,
+           decoration: _inputDecoration(
+            'Hospital / Clinic Name',
+            'Hospital / Clinic Name *',
+            Icons.local_hospital_outlined,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) return 'Hospital name is required';
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+
+        // Medical Registration Number *
+        TextFormField(
+          controller: _regNumberController,
+           decoration: _inputDecoration(
+            'Registration Number',
+            'Registration Number *',
+            Icons.verified_outlined,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) return 'Registration number is required';
+            return null;
+          },
+        ),
+        
+        // Optional: Signature status removed as it's not core for patient entry currently 
+        // or can be kept simple if needed. 
+        // For now, removing to clean up UI as requested "worst part".
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: Icon(icon, size: 20, color: AppColors.textMain.withValues(alpha: 0.5)),
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+      filled: true,
+      fillColor: const Color(0xFFF9FAFB),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide.none,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.doctor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                ),
-                child: const Icon(
-                  Icons.medical_information_outlined,
-                  color: AppColors.doctor,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Doctor / Issuer Information',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Text(
-                    'All fields required',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Registration warning
-          if (showRegistrationWarning)
-            Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: AppSpacing.md),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                border: Border.all(
-                  color: AppColors.warning.withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: AppColors.warning,
-                    size: 20,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'Medical registration number is required for valid prescriptions',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.warning.withOpacity(0.9),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Doctor Name *
-          TextFormField(
-            controller: _doctorNameController,
-            decoration: const InputDecoration(
-              labelText: 'Doctor Name *',
-              hintText: 'Dr. Full Name',
-              prefixIcon: Icon(Icons.person_outline, size: 20),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Doctor name is required';
-              }
-              // Check for placeholder values
-              final lowerValue = value.trim().toLowerCase();
-              if (lowerValue == 'mm' || lowerValue == 'mmm' || 
-                  lowerValue == 'n/a' || lowerValue == 'na' ||
-                  lowerValue == 'test' || lowerValue == 'placeholder' ||
-                  lowerValue == 'dr' || lowerValue == 'doctor') {
-                return 'Please enter a valid doctor name';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-
-          // Specialization
-          TextFormField(
-            controller: _specializationController,
-            decoration: const InputDecoration(
-              labelText: 'Specialization',
-              hintText: 'e.g., Cardiologist, General Physician',
-            ),
-            validator: (value) {
-              // Optional field, but check for placeholders if provided
-              if (value != null && value.trim().isNotEmpty) {
-                final lowerValue = value.trim().toLowerCase();
-                if (lowerValue == 'mm' || lowerValue == 'mmm' || 
-                    lowerValue == 'n/a' || lowerValue == 'na' ||
-                    lowerValue == 'test' || lowerValue == 'placeholder') {
-                  return 'Please remove placeholder text or leave empty';
-                }
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-
-          // Hospital/Clinic Name *
-          TextFormField(
-            controller: _hospitalController,
-            decoration: const InputDecoration(
-              labelText: 'Hospital / Clinic Name *',
-              hintText: 'Name of medical facility',
-              prefixIcon: Icon(Icons.local_hospital_outlined, size: 20),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Hospital/Clinic name is required';
-              }
-              // Check for placeholder values
-              final lowerValue = value.trim().toLowerCase();
-              if (lowerValue == 'mm' || lowerValue == 'mmm' || 
-                  lowerValue == 'n/a' || lowerValue == 'na' ||
-                  lowerValue == 'test' || lowerValue == 'placeholder') {
-                return 'Please enter a valid hospital/clinic name';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-
-          // Medical Registration Number *
-          TextFormField(
-            controller: _regNumberController,
-            decoration: const InputDecoration(
-              labelText: 'Medical Registration Number *',
-              hintText: 'e.g., MCI Registration Number',
-              prefixIcon: Icon(Icons.badge_outlined, size: 20),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Medical registration number is required';
-              }
-              // Check for placeholder values
-              final lowerValue = value.trim().toLowerCase();
-              if (lowerValue == 'mm' || lowerValue == 'mmm' || 
-                  lowerValue == 'n/a' || lowerValue == 'na' ||
-                  lowerValue == 'test' || lowerValue == 'placeholder') {
-                return 'Please enter a valid registration number';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Doctor Signature Status
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _signatureUploaded 
-                  ? AppColors.success.withOpacity(0.1)
-                  : Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _signatureUploaded 
-                      ? Icons.check_circle_outline 
-                      : Icons.draw_outlined,
-                  color: _signatureUploaded 
-                      ? AppColors.success 
-                      : AppColors.textSecondary,
-                  size: 20,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    _signatureUploaded 
-                        ? 'Doctor signature uploaded'
-                        : 'Doctor signature not uploaded',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: _signatureUploaded 
-                          ? AppColors.success 
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-                if (!_signatureUploaded)
-                  TextButton(
-                    onPressed: () {
-                      // Future: Implement signature upload
-                      setState(() {
-                        _signatureUploaded = true;
-                        _notifyChange();
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Signature upload - Feature coming soon'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    child: const Text('Upload'),
-                  ),
-              ],
-            ),
-          ),
-        ],
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: AppColors.borderSoft),
       ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+      isDense: true,
     );
   }
 }
