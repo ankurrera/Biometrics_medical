@@ -234,95 +234,166 @@ class PrescriptionTextParser {
   List<ParsedMedication> _extractMedications(List<String> lines) {
     List<ParsedMedication> meds = [];
     
-    // Pattern to identify frequency: 1-0-0, 1-0-1-0, 1/2-0-1/2 etc.
-    // Enhanced to allow spaces: 1 - 0 - 0, and dots: 1.0.0
-    final freqPattern = RegExp(r'(\d+(?:[./]\d+)?\s*[-xX*.]\s*\d+(?:[./]\d+)?\s*[-xX*.]\s*\d+(?:[./]\d+)?(?:\s*[-xX*.]\s*\d+(?:[./]\d+)?)?)');
+    // 1. Numerical Frequency: 1-0-1, 1.0.1, 1 0 1, 1-1, 1-0-1-0, 0.5-0-0.5
+    // Support 2 to 4 parts. Separators: -, ., x, X, *, or space (if more than 2 parts)
+    final numFreqPattern = RegExp(
+      r'(\d+(?:\.\d+)?\s*[-xX*.]\s*\d+(?:\.\d+)?(?:\s*[-xX*.]\s*\d+(?:\.\d+)?(?:\s*[-xX*.]\s*\d+(?:\.\d+)?)?)?)'
+      r'|'
+      r'(\b\d+\s+\d+\s+\d+(?:\s+\d+)?\b)', // Space separated (at least 3 parts to avoid matching dates/etc)
+    );
     
-    // Pattern to identify duration: 5 Days, 1 Week, 10-15 Days
+    // 2. Latin Abbreviations
+    final abbrFreqPattern = RegExp(r'\b(OD|BID|TID|QID|QD|HS|PRN|SOS|STAT|Once\s+a\s+day|Twice\s+a\s+day|Thrice\s+a\s+day)\b', caseSensitive: false);
+
+    // 3. Duration: 5 Days, 1 Week, etc.
     final durationPattern = RegExp(r'(\d+[-]?\d*)\s*(Days?|Weeks?|Months?|Yrs?|Years?)', caseSensitive: false);
+    
+    // 4. Strong Medication Indicators (for fallback)
+    final medIndicatorPattern = RegExp(r'\b(\d+\s*(mg|ml|gm|mcg|unit|u|tablet|cap|syrup|gel|ointment|drops))\b', caseSensitive: false);
 
     bool inMedSection = false;
     
-    for (var line in lines) {
+    for (int i = 0; i < lines.length; i++) {
+        String line = lines[i];
+        
+        // Skip junk or footer lines
+        if (_isFooterOrJunk(line)) continue;
+        
+        // Ignore "Contains:" lines as primary med lines
+        if (line.toLowerCase().startsWith('contains:')) continue;
+
         // Detect start of meds
-        if (RegExp(r'^(Rx|Treatment|Medication|Medicine)', caseSensitive: false).hasMatch(line)) {
+        if (RegExp(r'^(Rx|Treatment|Medication|Medicine|Prescribed)', caseSensitive: false).hasMatch(line)) {
             inMedSection = true;
             continue;
         }
         
-        // Find frequency as Anchor
-        final freqMatch = freqPattern.firstMatch(line);
-        if (freqMatch != null) {
-            String frequency = freqMatch.group(0)!;
-            
+        // Primary Search: Find Frequency as Anchor
+        final numMatch = numFreqPattern.firstMatch(line);
+        final abbrMatch = abbrFreqPattern.firstMatch(line);
+        
+        String? frequency;
+        int freqIndex = -1;
+        
+        if (numMatch != null) {
+            frequency = numMatch.group(0)!;
+            // Additional check for space-separated: shouldn't be too long or look like a dosage
+            if (frequency.contains(' ') && !frequency.contains(RegExp(r'[-.xX*]'))) {
+                // If it looks like "500 1 0 1", we want "1 0 1"
+                final parts = frequency.split(RegExp(r'\s+'));
+                if (parts.length > 3 && double.parse(parts[0]) > 5) {
+                    frequency = parts.sublist(1).join(' ');
+                }
+            }
+            freqIndex = line.indexOf(frequency);
+        } else if (abbrMatch != null) {
+            frequency = abbrMatch.group(0)!;
+            freqIndex = line.indexOf(frequency);
+        }
+
+        if (frequency != null) {
             // Split line around frequency
-            int freqIndex = line.indexOf(frequency);
             String part1 = line.substring(0, freqIndex).trim(); // Before freq (Name + Dosage)
             String part2 = line.substring(freqIndex + frequency.length).trim(); // After freq (Duration + Instructions)
             
             // Clean up Name (remove "1. " bullets)
             String name = part1.replaceAll(RegExp(r'^\d+[\.)]\s*'), '').trim();
-            String dosage = '';
-            
-            // Attempt to extract dosage from name (e.g. 500mg)
-            final doseMatch = RegExp(r'(\d+\s*(mg|ml|gm|mcg|unit|u))', caseSensitive: false).firstMatch(name);
-            if (doseMatch != null) {
-                dosage = doseMatch.group(0)!;
+            if (name.isEmpty && i > 0 && lines[i-1].length > 3 && !lines[i-1].contains(':')) {
+                // If name is empty, maybe it's on the previous line
+                name = lines[i-1].replaceAll(RegExp(r'^\d+[\.)]\s*'), '').trim();
             }
+            
+            String dosage = _extractDosage(name) ?? _extractDosage(part2) ?? '';
             
             // Duration
             String duration = '';
             int durationDays = 0;
-            final durMatch = durationPattern.firstMatch(part2); // Look in part 2 first
+            final durMatch = durationPattern.firstMatch(part2) ?? durationPattern.firstMatch(line); 
             if (durMatch != null) {
                duration = durMatch.group(0)!;
-               
-               // Calculate duration in days for quantity
-               int val = int.tryParse(durMatch.group(1)!) ?? 0;
-               String unit = durMatch.group(2)!.toLowerCase();
-               if (unit.startsWith('week')) val *= 7;
-               if (unit.startsWith('month')) val *= 30;
-               durationDays = val;
+               durationDays = _parseDurationToDays(durMatch.group(1)!, durMatch.group(2)!);
             }
             
             // Instructions
             String instructions = part2.replaceAll(duration, '').replaceAll(RegExp(r'[\|\(\)]'), '').trim();
             
             // Quantity Calculation
-            int qty = 0;
-            if (durationDays > 0) {
-               // Sum the frequency digits (1-0-1 => 2)
-               // Clean frequency string for parsing (replace hyphens/spaces with just spaces)
-               String cleanFreq = frequency.replaceAll(RegExp(r'[-xX*\s]+'), ' ');
-               List<String> parts = cleanFreq.trim().split(' ');
-               
-               double dailyDose = 0;
-               for (var p in parts) {
-                  // Handle fractions like 1/2
-                  if (p.contains('/')) {
-                      final frac = p.split('/');
-                      if (frac.length == 2) {
-                          dailyDose += (double.tryParse(frac[0]) ?? 0) / (double.tryParse(frac[1]) ?? 1);
-                      }
-                  } else {
-                      dailyDose += double.tryParse(p) ?? 0;
-                  }
-               }
-               qty = (dailyDose * durationDays).ceil();
-            }
+            int qty = _calculateQuantity(frequency, durationDays);
             
             meds.add(ParsedMedication(
-              name: name,
+              name: name.isEmpty ? "Unknown Medication" : name,
               dosage: dosage,
               frequency: frequency,
               duration: duration,
               quantity: qty,
-              instructions: instructions, // e.g. "After food"
+              instructions: instructions,
             ));
+        } else if (inMedSection && medIndicatorPattern.hasMatch(line)) {
+            // Fallback for lines in med section that look like medicine but have no frequency
+            if (!line.toLowerCase().startsWith('contains:') && line.length > 5) {
+                meds.add(ParsedMedication(
+                  name: line.replaceAll(RegExp(r'^\d+[\.)]\s*'), '').trim(),
+                  dosage: _extractDosage(line) ?? '',
+                  frequency: '',
+                  duration: '',
+                  quantity: 0,
+                  instructions: '',
+                ));
+            }
         }
     }
     
     return meds;
+  }
+
+  String? _extractDosage(String text) {
+      final match = RegExp(r'(\d+\s*(mg|ml|gm|mcg|unit|u))', caseSensitive: false).firstMatch(text);
+      return match?.group(0);
+  }
+
+  int _parseDurationToDays(String valStr, String unit) {
+      int val = int.tryParse(valStr.split('-').last) ?? 0;
+      unit = unit.toLowerCase();
+      if (unit.startsWith('week')) return val * 7;
+      if (unit.startsWith('month')) return val * 30;
+      return val;
+  }
+
+  int _calculateQuantity(String frequency, int durationDays) {
+      if (durationDays <= 0) return 0;
+      
+      double dailyDose = 0;
+      final freqUpper = frequency.toUpperCase();
+      
+      if (freqUpper.contains('OD') || freqUpper.contains('ONCE')) {
+          dailyDose = 1;
+      } else if (freqUpper.contains('BID') || freqUpper.contains('TWICE')) {
+          dailyDose = 2;
+      } else if (freqUpper.contains('TID') || freqUpper.contains('THRICE')) {
+          dailyDose = 3;
+      } else if (freqUpper.contains('QID')) {
+          dailyDose = 4;
+      } else {
+          // Numerical frequency like 1-0-1
+          String cleanFreq = frequency.replaceAll(RegExp(r'[-xX*.\s]+'), ' ');
+          List<String> parts = cleanFreq.trim().split(' ');
+          for (var p in parts) {
+            if (p.contains('/')) {
+                final frac = p.split('/');
+                if (frac.length == 2) {
+                    dailyDose += (double.tryParse(frac[0]) ?? 0) / (double.tryParse(frac[1]) ?? 1);
+                }
+            } else {
+                dailyDose += double.tryParse(p) ?? 0;
+            }
+          }
+      }
+      return (dailyDose * durationDays).ceil();
+  }
+
+  bool _isFooterOrJunk(String line) {
+    final junk = RegExp(r'\b(Page|Signature|Sign|Reg No|Reg\.No|Address|Phone|Email|Electronic Signature)\b', caseSensitive: false);
+    return junk.hasMatch(line) || line.length < 2;
   }
 }
 

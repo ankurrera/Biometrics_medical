@@ -64,7 +64,7 @@ Downloading packages...
 Got dependencies!
 61 packages have newer versions incompatible with dependency constraints.
 Try `flutter pub outdated` for more information.
-00:00 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:01 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:02 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:03 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:03 +0: OCR Extraction Logic                                                                                                                                                                         00:03 +0: OCR Extraction Logic                                                                                                                                                                         
+00:00 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:01 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:02 +0: loading /Users/ankurbag/Documents/GitHub/Biometrics_medical/test/extract_medication_test.dart                                                                                                00:02 +0: OCR Extraction Logic                                                                                                                                                                         00:02 +0: OCR Extraction Logic                                                                                                                                                                         
 --- RAW OCR TEXT START ---
 Apollo 24|7
 Dr. Pawan Yelgulwar
@@ -108,7 +108,7 @@ Doctor: Pawan Yelgulwar
 Hospital: Apollo 24|7
 Date: 2024-05-10 00:00:00.000
 Diagnosis: Retrocalcaneal bursitis/Plantar Fasciitis?
-Medications Found: 3
+Medications Found: 4
   - Name: PAN 40 TABLET 15'S
     Dosage: 
     Freq: 1-0-0-0
@@ -130,17 +130,33 @@ Medications Found: 3
     Quantity: 15
     Instructions: TABLET  Once a day
 
-00:03 +1: OCR Extraction Logic                                                                                                                                                                         00:03 +1: OCR Extraction Logic - Noisy Data                                                                                                                                                            00:03 +1: OCR Extraction Logic - Noisy Data                                                                                                                                                            
+  - Name: VOLINI PAIN RELIEF GEL, 75 GM -----1----- DROP |
+    Dosage: 75 GM
+    Freq: Twice a day
+    Duration: 7 days
+    Quantity: 14
+    Instructions: 
+
+00:02 +1: OCR Extraction Logic                                                                                                                                                                         00:03 +1: OCR Extraction Logic - Noisy Data                                                                                                                                                            00:03 +1: OCR Extraction Logic - Noisy Data                                                                                                                                                            
 --- RAW OCR TEXT START ---
     1. PAN 40 TABLET 15'S 1 - 0 - 0 - 0 TABLET | Once a day 15 days
-    2. SUPRADYN DAILY   1- 0- 0- 0   Tab.
+    2. SUPRADYN DAILY 1- 0- 0- 0 15 days
     3. HIFENAC SR 1.0.0.0 (Dot separator)
     4. HALF DOSE 0.5 - 0 - 0.5 (Decimals with dash)
+    5. AZITHRAL 500 MG OD 3 Days
+    6. AUGMENTIN 625 BID 5 Days
+    7. PANTOCID 40 1 0 1 (Space separators only)
+    8. CROCIN 650 MG 1-1 (2-part frequency)
     
 --- RAW OCR TEXT END ---
 --- NOISY OCR RESULT ---
-Captured: PAN 40 TABLET 15'S | 1 - 0 - 0 - 0 | Qty: 15
-Captured: SUPRADYN DAILY | 1- 0- 0- 0 | Qty: 0
-Captured: HIFENAC SR | 1.0.0.0 | Qty: 0
-Captured: HALF DOSE | 0.5 - 0 - 0.5 | Qty: 0
+Total Captured: 8
+Captured: PAN 40 TABLET 15'S | Freq: 1 - 0 - 0 - 0 | Dur: 15 days | Qty: 15
+Captured: SUPRADYN DAILY | Freq: 1- 0- 0- 0 | Dur: 15 days | Qty: 15
+Captured: HIFENAC SR | Freq: 1.0.0.0 | Dur:  | Qty: 0
+Captured: HALF DOSE | Freq: 0.5 - 0 - 0.5 | Dur:  | Qty: 0
+Captured: AZITHRAL 500 MG | Freq: OD | Dur: 3 Days | Qty: 3
+Captured: AUGMENTIN 625 | Freq: BID | Dur: 5 Days | Qty: 10
+Captured: PANTOCID 40 | Freq: 1 0 1 | Dur:  | Qty: 0
+Captured: CROCIN 650 MG | Freq: 1-1 | Dur:  | Qty: 0
 00:03 +2: OCR Extraction Logic - Noisy Data                                                                                                                                                            00:03 +2: All tests passed!                                                                                                                                                                            

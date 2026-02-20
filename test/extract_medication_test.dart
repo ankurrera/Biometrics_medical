@@ -65,17 +65,27 @@ M-N-E-N: Morning - Noon - Evening - Night Note: Medicine Substitution Allowed Wh
     // Simulating OCR noise and edge cases
     final text = '''
     1. PAN 40 TABLET 15'S 1 - 0 - 0 - 0 TABLET | Once a day 15 days
-    2. SUPRADYN DAILY   1- 0- 0- 0   Tab.
+    2. SUPRADYN DAILY 1- 0- 0- 0 15 days
     3. HIFENAC SR 1.0.0.0 (Dot separator)
     4. HALF DOSE 0.5 - 0 - 0.5 (Decimals with dash)
+    5. AZITHRAL 500 MG OD 3 Days
+    6. AUGMENTIN 625 BID 5 Days
+    7. PANTOCID 40 1 0 1 (Space separators only)
+    8. CROCIN 650 MG 1-1 (2-part frequency)
     ''';
 
     final parser = PrescriptionTextParser();
     final data = parser.parse(text);
 
     print('--- NOISY OCR RESULT ---');
+    print('Total Captured: ${data.medications.length}');
     for (var med in data.medications) {
-       print('Captured: ${med.name} | ${med.frequency} | Qty: ${med.quantity}');
+       print('Captured: ${med.name} | Freq: ${med.frequency} | Dur: ${med.duration} | Qty: ${med.quantity}');
     }
+    
+    // Some basic assertions in print form for manual check
+    assert(data.medications.any((m) => m.name.contains('AZITHRAL') && m.frequency == 'OD'));
+    assert(data.medications.any((m) => m.name.contains('PANTOCID') && m.frequency.trim() == '1 0 1'));
+    assert(data.medications.any((m) => m.name.contains('CROCIN') && m.frequency == '1-1'));
   });
 }
